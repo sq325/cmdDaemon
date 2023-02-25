@@ -1,0 +1,17 @@
+cmds:
+- cmd: prometheus
+  args: 
+  - --web.listen-address="0.0.0.0:9091"
+  - --web.config.file="./prometheus2.yml"
+  - --web.enable-lifecycle
+  - --storage.tsdb.path="./data1/"
+  - --storage.tsdb.retention=7d
+- cmd: prometheus
+  args: 
+  - --web.listen-address="0.0.0.0:9092"
+  - --web.config.file="./prometheus1.yml"
+  - --web.enable-lifecycle
+  - --storage.tsdb.path="./data2/"
+  - --storage.tsdb.retention=7d
+
+
