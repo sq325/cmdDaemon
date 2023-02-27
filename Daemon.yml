@@ -1,0 +1,15 @@
+cmds:
+- cmd: ./subapp
+  args: 
+  - -n 1
+  - -i 3s
+- cmd: ./subapp
+  args: 
+  - -n 2
+  - -i 3s
+- cmd: ./subapp
+  args: 
+  - -n 3
+  - -i 3s
+
+

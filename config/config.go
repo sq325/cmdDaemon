@@ -25,19 +25,16 @@ type Conf struct {
 	} `yaml:"cmds"`
 }
 
-type CmdGenerator interface {
-	Generate() []*exec.Cmd
-}
+func GenerateCmds(conf *Conf) []*exec.Cmd {
+	if len(conf.Cmds) == 0 {
+		return nil
+	}
 
-func NewCmdGenerator() CmdGenerator {
-	return &prometheusGenerate{}
-}
-
-type prometheusGenerate struct {
-}
-
-func (prom *prometheusGenerate) Generate() []*exec.Cmd {
-	return nil
+	cmds := make([]*exec.Cmd, 0, len(conf.Cmds))
+	for _, cmd := range conf.Cmds {
+		cmds = append(cmds, exec.Command(cmd.Cmd, cmd.Args...))
+	}
+	return cmds
 }
 
 func Unmarshal(b []byte) (*Conf, error) {
