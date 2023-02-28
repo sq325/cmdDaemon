@@ -48,6 +48,21 @@ func (d *Daemon) Run() {
 	// exitedCmdCh生产者
 	go d.run()
 
+	// 每30分钟重置所有cmd的limiter
+	ticker := time.NewTicker(30 * time.Minute)
+	defer ticker.Stop()
+	go func() {
+		for {
+			select {
+			case <-d.ctx.Done():
+				return
+			case <-ticker.C:
+				d.resetLimiter()
+				d.Logger.Infoln("Reseted all cmd's limiter")
+			}
+		}
+	}()
+
 	// 接收exitedCmdCh中需要restart的cmd
 	// 更改restartLimit
 	// exitedCmdCh消费者
@@ -61,7 +76,7 @@ func (d *Daemon) Run() {
 			// 打印错误原因
 			dcmd.mu.Lock()
 			d.Logger.Warnln("Err:", dcmd.err)
-			d.Logger.Warnln("restarting cmd: ", dcmd.cmd.String(), ". Restarted times: ", dcmd.limiter.count)
+			d.Logger.Warnln("Restarting cmd: ", dcmd.cmd.String(), ". Restarted times: ", dcmd.limiter.count)
 			dcmd.mu.Unlock()
 			go func() {
 				select {
@@ -71,11 +86,13 @@ func (d *Daemon) Run() {
 				case <-time.After(time.Until(dcmd.limiter.next())):
 					// 重启cmd
 					dcmd.update()
-					// 如果超过limit的次数限制，就不再重启
+					// 没超过limit，重启cmd
 					if ok := dcmd.limiter.Inc(); ok {
+						d.Logger.Warnln("Restarted!")
 						dcmd.startAndWait(d.exitedCmdCh)
 						return
 					}
+					// 如果超过limit的次数限制，就不再重启
 					d.Logger.Errorln(dcmd.cmd.String(), " ", ErrLimitReached)
 					return
 				}
@@ -92,11 +109,8 @@ func (d *Daemon) run() {
 	<-d.ctx.Done()
 }
 
-// hashCmd hash cmd and pid
-// func (d *Daemon) hashCmd(cmd *exec.Cmd) string {
-// 	hash := fnv.New32()
-// 	cmdstr, pid := cmd.String(), cmd.Process.Pid
-// 	cmdstrpid := cmdstr + strconv.Itoa(pid)
-// 	hash.Write([]byte(cmdstrpid))
-// 	return strconv.Itoa(int(hash.Sum32()))
-// }
+func (d *Daemon) resetLimiter() {
+	for _, dCmd := range d.dCmds {
+		dCmd.limiter.Reset()
+	}
+}

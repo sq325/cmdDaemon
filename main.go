@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	_version = "v1.0 2023-02-28"
+	_version = "v1.1 2023-02-28"
 )
 
 var (
@@ -47,6 +47,7 @@ func main() {
 	}
 	if *version {
 		fmt.Println(_version)
+		return
 	}
 
 	// 监听SIGHUP和SIGTERM信号
@@ -138,14 +139,14 @@ func createConfigFile() {
 func initConf() {
 	configBytes, err := os.ReadFile(*configFile)
 	if err != nil {
-		logger.Fatalln("Read config failed.")
+		log.Fatalln("Read config failed.")
 	}
 	conf, err = config.Unmarshal(configBytes)
 	if err != nil {
-		logger.Fatalln("Unmarshal config failed.")
+		log.Fatalln("Unmarshal config failed.")
 	}
 	if len(conf.Cmds) == 0 {
-		logger.Fatalln("No cmd found.")
+		log.Fatalln("No cmd found.")
 	}
 }
 
