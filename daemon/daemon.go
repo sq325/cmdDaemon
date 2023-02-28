@@ -1,83 +1,45 @@
 package daemon
 
 import (
+	"context"
 	"errors"
-	"fmt"
-	"hash/fnv"
 	"os/exec"
-	"strconv"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
 )
 
-var (
-	ErrNoCmdFound   = errors.New("No cmd found")
-	ErrLimitReached = errors.New("Limit reached")
+const (
+	_exited = iota
+	_running
 )
 
-type ExitedCmd struct {
-	Cmd *exec.Cmd
-	Err error
-}
+var (
+	ErrNoCmdFound   = errors.New("no cmd found")
+	ErrLimitReached = errors.New("restart limit reached")
+)
 
-// 并发安全
-type Limiter struct {
-	mu           sync.Mutex
-	count, limit int
-}
-
-func (l *Limiter) Inc() bool {
-	return l.Add(1)
-}
-
-func (l *Limiter) Add(n int) bool {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	if l.count+n > l.limit || l.count+n < 0 {
-		return false
-	}
-	l.count += n
-	return true
-}
-
-func (l *Limiter) Dec() bool {
-	return l.Add(-1)
-}
-
-func (l *Limiter) Reset() {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	l.count = 0
-}
-
+// Daemon is a daemon that manages multiple dcmds
 type Daemon struct {
-	mu sync.Mutex
+	ctx context.Context
 
-	exitedCmdCh    chan *ExitedCmd      // 生产者：runCmd 消费者：reRun
-	runningCmds    map[string]*exec.Cmd // 正在运行的cmd
-	done           chan struct{}        // 退出daemon和所有child cmd
-	restartLimiter *Limiter             // 重启次数限制，4 * len(Cmds) per minute
+	exitedCmdCh chan *daemonCmd
+	dCmds       []*daemonCmd
 
-	Cmds   []*exec.Cmd // Cmds is a list of command to run
 	Logger *zap.SugaredLogger
 }
 
-func NewDaemon(cmds []*exec.Cmd, logger *zap.SugaredLogger) *Daemon {
+func NewDaemon(ctx context.Context, cmds []*exec.Cmd, logger *zap.SugaredLogger) *Daemon {
 	d := &Daemon{
-		Cmds:           cmds,
-		restartLimiter: &Limiter{limit: 4 * len(cmds)},
-		Logger:         logger,
+		ctx:         ctx,
+		Logger:      logger,
+		exitedCmdCh: make(chan *daemonCmd, 20),
 	}
-	d.init()
+	for _, cmd := range cmds {
+		dCmd := newDaemonCmd(d.ctx, cmd)
+		d.dCmds = append(d.dCmds, dCmd)
+	}
 	return d
-}
-
-func (d *Daemon) init() {
-	d.exitedCmdCh = make(chan *ExitedCmd, 20)
-	d.runningCmds = make(map[string]*exec.Cmd, 20)
-	d.done = make(chan struct{}, 1)
 }
 
 // 主goroutine
@@ -86,110 +48,55 @@ func (d *Daemon) Run() {
 	// exitedCmdCh生产者
 	go d.run()
 
-	go d.resetLimiter()
-
 	// 接收exitedCmdCh中需要restart的cmd
 	// 更改restartLimit
 	// exitedCmdCh消费者
 	for {
 		select {
 		// 退出所有goroutine
-		case <-d.done:
-			d.killAll()
+		case <-d.ctx.Done():
 			return
 		// 处理exitedCmd
-		case c := <-d.exitedCmdCh:
-			if c.Err != nil {
-				d.Logger.Errorf("cmd: %s exited with err: %s", c.Cmd.String(), c.Err)
-				d.Logger.Errorf("cmd: %s will restarting", c.Cmd.String())
-			}
-			if ok := d.restartLimiter.Inc(); !ok {
-				d.Logger.Errorln(c.Cmd.String(), " err:", ErrLimitReached)
-				d.exitedCmdCh <- c
-				time.Sleep(3 * time.Second)
-				continue
-			}
-			newCmd := exec.Command(c.Cmd.Path, c.Cmd.Args[1:]...)
-			go d.startAndWait(newCmd)
+		case dcmd := <-d.exitedCmdCh:
+			// 打印错误原因
+			dcmd.mu.Lock()
+			d.Logger.Warnln("Err:", dcmd.err)
+			d.Logger.Warnln("restarting cmd: ", dcmd.cmd.String(), ". Restarted times: ", dcmd.limiter.count)
+			dcmd.mu.Unlock()
+			go func() {
+				select {
+				case <-d.ctx.Done():
+					return
+				// 等到下次重启时间到了再重启
+				case <-time.After(time.Until(dcmd.limiter.next())):
+					// 重启cmd
+					dcmd.update()
+					// 如果超过limit的次数限制，就不再重启
+					if ok := dcmd.limiter.Inc(); ok {
+						dcmd.startAndWait(d.exitedCmdCh)
+						return
+					}
+					d.Logger.Errorln(dcmd.cmd.String(), " ", ErrLimitReached)
+					return
+				}
+			}()
 		}
 	}
 }
 
 // run start all cmds and wait for them to exit
 func (d *Daemon) run() {
-
-	for _, cmd := range d.Cmds {
-		go d.startAndWait(cmd)
+	for _, dCmd := range d.dCmds {
+		go dCmd.startAndWait(d.exitedCmdCh)
 	}
-	<-d.done
-}
-
-func (d *Daemon) Done() chan struct{} {
-	return d.done
-}
-
-// startAndWait run the cmd and update runningCmds, then wait for it to exit
-// startAndWait is producer of exitedCmdCh
-func (d *Daemon) startAndWait(cmd *exec.Cmd) {
-	var err error
-	err = cmd.Start()
-	if err != nil {
-		err = fmt.Errorf("%s start err: %s", cmd.String(), err)
-		exitedCmd := &ExitedCmd{
-			Cmd: cmd,
-			Err: err,
-		}
-		d.exitedCmdCh <- exitedCmd
-		return
-	}
-
-	key := d.hashCmd(cmd)
-	d.mu.Lock()
-	d.runningCmds[key] = cmd // 更新runningCmds
-	d.mu.Unlock()
-	err = cmd.Wait()
-	if err != nil {
-		err = fmt.Errorf("%s exited, err: %s", cmd.String(), err)
-	}
-	d.mu.Lock()
-	delete(d.runningCmds, key) // 更新runningCmds
-	d.mu.Unlock()
-	exitedCmd := &ExitedCmd{
-		Cmd: cmd,
-		Err: err,
-	}
-	d.exitedCmdCh <- exitedCmd
-}
-
-// resetLimiter reset restartLimiter every minute
-func (d *Daemon) resetLimiter() {
-	for {
-		select {
-		case <-d.done:
-			return
-		case <-time.After(time.Minute):
-			d.restartLimiter.Reset()
-		}
-	}
+	<-d.ctx.Done()
 }
 
 // hashCmd hash cmd and pid
-func (d *Daemon) hashCmd(cmd *exec.Cmd) string {
-	hash := fnv.New32()
-	cmdstr, pid := cmd.String(), cmd.Process.Pid
-	cmdstrpid := cmdstr + strconv.Itoa(pid)
-	hash.Write([]byte(cmdstrpid))
-	return strconv.Itoa(int(hash.Sum32()))
-}
-
-// killAll kill all running cmds
-func (d *Daemon) killAll() {
-	for _, cmd := range d.runningCmds {
-		_ = cmd.Process.Kill()
-	}
-}
-
-// Close close daemon
-func (d *Daemon) Close() {
-	close(d.done)
-}
+// func (d *Daemon) hashCmd(cmd *exec.Cmd) string {
+// 	hash := fnv.New32()
+// 	cmdstr, pid := cmd.String(), cmd.Process.Pid
+// 	cmdstrpid := cmdstr + strconv.Itoa(pid)
+// 	hash.Write([]byte(cmdstrpid))
+// 	return strconv.Itoa(int(hash.Sum32()))
+// }

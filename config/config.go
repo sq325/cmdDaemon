@@ -9,13 +9,17 @@ import (
 
 var (
 	DefaultConfig = `cmds:
-	- cmd: ./prometheus
+	- cmd: ./cmd/prometheusLinux/prometheus
 		args: 
-		- --web.listen-address="0.0.0.0:9091"
-		- --web.config.file="./prometheus.yml"
+		- --web.listen-address
+		- "0.0.0.0:9091"
+		- --web.config.file
+		- "./cmd/prometheusLinux/prometheus.yml"
 		- --web.enable-lifecycle
-		- --storage.tsdb.path="./data1/"
-		- --storage.tsdb.retention=7d`
+		- --storage.tsdb.path
+		- "./cmd/prometheusLinux/data1/"
+		- --storage.tsdb.retention
+		- 7d`
 )
 
 type Conf struct {

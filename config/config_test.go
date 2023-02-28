@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"testing"
 )
 
@@ -26,10 +25,15 @@ func TestUnmarshal(t *testing.T) {
 	}
 	cmds := GenerateCmds(conf)
 
-	cc := exec.Command("./subapp", "-n", "3", "-i", "3s")
-	t.Log(cc.Path, cc.Args)
+	// cc := exec.Command("./subapp", "-n", "3", "-i", "3s")
+	// cc.Run()
+	// t.Log(cc.Path, cc.Args)
 	for _, c := range cmds {
 		fmt.Println(c.Path, c.Args)
-		c.Run()
+		fmt.Println(os.Getwd())
+		err := c.Start()
+		fmt.Println("start err: ", err)
+		err = c.Wait()
+		fmt.Println("wait err: ", err)
 	}
 }

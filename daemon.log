@@ -1,0 +1,326 @@
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 14:34:39
+2023-02-28T14:34:39.490+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:39.490+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s restarted times:  0
+2023-02-28T14:34:39.490+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:39.490+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s restarted times:  0
+2023-02-28T14:34:39.490+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:39.490+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s restarted times:  0
+2023-02-28T14:34:39.493+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:39.493+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s restarted times:  1
+2023-02-28T14:34:39.493+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:39.493+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s restarted times:  1
+2023-02-28T14:34:39.493+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:39.493+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s restarted times:  1
+2023-02-28T14:34:41.496+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:41.496+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s restarted times:  2
+2023-02-28T14:34:41.496+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:41.496+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s restarted times:  2
+2023-02-28T14:34:41.496+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:41.496+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s restarted times:  2
+2023-02-28T14:34:45.495+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:45.495+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s restarted times:  3
+2023-02-28T14:34:45.495+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:45.495+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s restarted times:  3
+2023-02-28T14:34:45.496+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:45.496+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s restarted times:  3
+2023-02-28T14:34:53.498+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:53.498+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s restarted times:  4
+2023-02-28T14:34:53.499+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:53.499+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s restarted times:  4
+2023-02-28T14:34:53.499+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:34:53.499+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s restarted times:  4
+2023-02-28T14:35:09.498+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:35:09.498+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s restarted times:  5
+2023-02-28T14:35:09.498+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:35:09.498+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s restarted times:  5
+2023-02-28T14:35:09.498+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:35:09.498+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s restarted times:  5
+2023-02-28T14:35:41.495+0800	ERROR	daemon/daemon.go:79	./subapp -n 1 -i 3s   limit reached
+2023-02-28T14:35:41.495+0800	ERROR	daemon/daemon.go:79	./subapp -n 3 -i 3s   limit reached
+2023-02-28T14:35:41.495+0800	ERROR	daemon/daemon.go:79	./subapp -n 2 -i 3s   limit reached
+2023-02-28T14:36:34.118+0800	WARN	prometheusDaemon/main.go:104	Catched a term sign, kill all child processes.  2023-02-28 14:36:34
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 14:36:38
+2023-02-28T14:36:38.684+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:38.685+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  0
+2023-02-28T14:36:38.685+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:38.685+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s . Restarted times:  0
+2023-02-28T14:36:38.685+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:38.685+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s . Restarted times:  0
+2023-02-28T14:36:38.687+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:38.687+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s . Restarted times:  1
+2023-02-28T14:36:38.687+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:38.687+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  1
+2023-02-28T14:36:38.687+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:38.687+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s . Restarted times:  1
+2023-02-28T14:36:40.690+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:40.690+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s . Restarted times:  2
+2023-02-28T14:36:40.690+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:40.690+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  2
+2023-02-28T14:36:40.691+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:40.691+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s . Restarted times:  2
+2023-02-28T14:36:44.693+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:44.693+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s . Restarted times:  3
+2023-02-28T14:36:44.693+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:44.693+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  3
+2023-02-28T14:36:44.693+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:44.693+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s . Restarted times:  3
+2023-02-28T14:36:52.693+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:52.693+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  4
+2023-02-28T14:36:52.693+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:52.693+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s . Restarted times:  4
+2023-02-28T14:36:52.693+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:36:52.693+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s . Restarted times:  4
+2023-02-28T14:37:08.692+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 2 -i 3s  err: cmd: ./subapp -n 2 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:37:08.692+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 2 -i 3s . Restarted times:  5
+2023-02-28T14:37:08.692+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 3s  err: cmd: ./subapp -n 1 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:37:08.692+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 3s . Restarted times:  5
+2023-02-28T14:37:08.692+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:37:08.692+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  5
+2023-02-28T14:37:40.689+0800	ERROR	daemon/daemon.go:79	./subapp -n 2 -i 3s   limit reached
+2023-02-28T14:37:40.689+0800	ERROR	daemon/daemon.go:79	./subapp -n 3 -i 3s   limit reached
+2023-02-28T14:37:40.689+0800	ERROR	daemon/daemon.go:79	./subapp -n 1 -i 3s   limit reached
+2023-02-28T14:37:44.666+0800	WARN	prometheusDaemon/main.go:104	Catched a term sign, kill all child processes.  2023-02-28 14:37:44
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 14:38:05
+2023-02-28T14:38:05.625+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:38:05.625+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  0
+2023-02-28T14:38:05.628+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:38:05.628+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  1
+2023-02-28T14:38:07.630+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:38:07.630+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  2
+2023-02-28T14:38:08.625+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 3  err: <nil>
+2023-02-28T14:38:08.626+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 3 . Restarted times:  0
+2023-02-28T14:38:10.625+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 5  err: <nil>
+2023-02-28T14:38:10.625+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 5 . Restarted times:  0
+2023-02-28T14:38:11.632+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:38:11.632+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  3
+2023-02-28T14:38:11.632+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 3  err: <nil>
+2023-02-28T14:38:11.632+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 3 . Restarted times:  1
+2023-02-28T14:38:14.640+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 3  err: <nil>
+2023-02-28T14:38:14.640+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 3 . Restarted times:  2
+2023-02-28T14:38:15.633+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 5  err: <nil>
+2023-02-28T14:38:15.633+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 5 . Restarted times:  1
+2023-02-28T14:38:18.642+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 3  err: <nil>
+2023-02-28T14:38:18.642+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 3 . Restarted times:  3
+2023-02-28T14:38:19.639+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:38:19.639+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  4
+2023-02-28T14:38:20.642+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 5  err: <nil>
+2023-02-28T14:38:20.642+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 5 . Restarted times:  2
+2023-02-28T14:38:25.650+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 5  err: <nil>
+2023-02-28T14:38:25.650+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 5 . Restarted times:  3
+2023-02-28T14:38:26.643+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 3  err: <nil>
+2023-02-28T14:38:26.643+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 3 . Restarted times:  4
+2023-02-28T14:38:33.652+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 5  err: <nil>
+2023-02-28T14:38:33.652+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 5 . Restarted times:  4
+2023-02-28T14:38:35.636+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:38:35.636+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  5
+2023-02-28T14:38:42.643+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 3  err: <nil>
+2023-02-28T14:38:42.643+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 3 . Restarted times:  5
+2023-02-28T14:38:49.652+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 5  err: <nil>
+2023-02-28T14:38:49.652+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 5 . Restarted times:  5
+2023-02-28T14:39:07.632+0800	ERROR	daemon/daemon.go:79	./subapp -n 3 -i 3s   limit reached
+2023-02-28T14:39:11.636+0800	ERROR	daemon/daemon.go:79	/bin/sleep 3   limit reached
+2023-02-28T14:39:16.645+0800	ERROR	daemon/daemon.go:79	/bin/sleep 5   limit reached
+2023-02-28T14:39:36.759+0800	WARN	prometheusDaemon/main.go:104	Catched a term sign, kill all child processes.  2023-02-28 14:39:36
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 14:39:45
+2023-02-28T14:39:45.674+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:39:45.674+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  0
+2023-02-28T14:39:45.676+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:39:45.676+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  1
+2023-02-28T14:39:47.680+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:39:47.680+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  2
+2023-02-28T14:39:51.683+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:39:51.683+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  3
+2023-02-28T14:39:59.696+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:39:59.697+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  4
+2023-02-28T14:40:15.679+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 30  err: <nil>
+2023-02-28T14:40:15.679+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 30 . Restarted times:  0
+2023-02-28T14:40:15.689+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 3 -i 3s  err: cmd: ./subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:40:15.689+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 3 -i 3s . Restarted times:  5
+2023-02-28T14:40:35.679+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 50  err: <nil>
+2023-02-28T14:40:35.679+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 50 . Restarted times:  0
+2023-02-28T14:40:45.690+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 30  err: <nil>
+2023-02-28T14:40:45.690+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 30 . Restarted times:  1
+2023-02-28T14:40:47.680+0800	ERROR	daemon/daemon.go:79	./subapp -n 3 -i 3s   limit reached
+2023-02-28T14:41:15.698+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 30  err: <nil>
+2023-02-28T14:41:15.698+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 30 . Restarted times:  2
+2023-02-28T14:41:25.687+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 50  err: <nil>
+2023-02-28T14:41:25.687+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 50 . Restarted times:  1
+2023-02-28T14:41:45.706+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 30  err: <nil>
+2023-02-28T14:41:45.706+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 30 . Restarted times:  3
+2023-02-28T14:42:15.695+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 50  err: <nil>
+2023-02-28T14:42:15.695+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 50 . Restarted times:  2
+2023-02-28T14:42:15.713+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 30  err: <nil>
+2023-02-28T14:42:15.713+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 30 . Restarted times:  4
+2023-02-28T14:42:45.720+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 30  err: <nil>
+2023-02-28T14:42:45.721+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 30 . Restarted times:  5
+2023-02-28T14:42:47.714+0800	ERROR	daemon/daemon.go:79	/bin/sleep 30   limit reached
+2023-02-28T14:43:05.702+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 50  err: <nil>
+2023-02-28T14:43:05.702+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 50 . Restarted times:  3
+2023-02-28T14:43:36.580+0800	WARN	prometheusDaemon/main.go:104	Catched a term sign, kill all child processes.  2023-02-28 14:43:36
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 14:44:14
+2023-02-28T14:44:14.149+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s  err: cmd: ./cmd/prometheusArm/subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:44:14.149+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s . Restarted times:  0
+2023-02-28T14:44:14.152+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s  err: cmd: ./cmd/prometheusArm/subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:44:14.152+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s . Restarted times:  1
+2023-02-28T14:44:16.157+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s  err: cmd: ./cmd/prometheusArm/subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:44:16.157+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s . Restarted times:  2
+2023-02-28T14:44:20.165+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s  err: cmd: ./cmd/prometheusArm/subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:44:20.165+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s . Restarted times:  3
+2023-02-28T14:44:28.166+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s  err: cmd: ./cmd/prometheusArm/subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:44:28.166+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s . Restarted times:  4
+2023-02-28T14:44:44.148+0800	WARN	daemon/daemon.go:63	cmd:  /bin/sleep 30  err: <nil>
+2023-02-28T14:44:44.148+0800	WARN	daemon/daemon.go:64	restarting cmd:  /bin/sleep 30 . Restarted times:  0
+2023-02-28T14:44:44.165+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s  err: cmd: ./cmd/prometheusArm/subapp -n 3 -i 3s exited with err: %!s(<nil>)
+2023-02-28T14:44:44.165+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/subapp -n 3 -i 3s . Restarted times:  5
+2023-02-28T14:44:49.787+0800	WARN	prometheusDaemon/main.go:104	Catched a term sign, kill all child processes.  2023-02-28 14:44:49
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 14:48:55
+2023-02-28T14:48:56.009+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" exited with err: %!s(<nil>)
+2023-02-28T14:48:56.009+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" . Restarted times:  0
+2023-02-28T14:48:56.009+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" exited with err: %!s(<nil>)
+2023-02-28T14:48:56.010+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" . Restarted times:  0
+2023-02-28T14:48:56.038+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" exited with err: %!s(<nil>)
+2023-02-28T14:48:56.038+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" . Restarted times:  1
+2023-02-28T14:48:56.039+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" exited with err: %!s(<nil>)
+2023-02-28T14:48:56.039+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" . Restarted times:  1
+2023-02-28T14:48:58.045+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" exited with err: %!s(<nil>)
+2023-02-28T14:48:58.045+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" . Restarted times:  2
+2023-02-28T14:48:58.045+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" exited with err: %!s(<nil>)
+2023-02-28T14:48:58.045+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" . Restarted times:  2
+2023-02-28T14:49:02.057+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" exited with err: %!s(<nil>)
+2023-02-28T14:49:02.058+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" . Restarted times:  3
+2023-02-28T14:49:02.058+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" exited with err: %!s(<nil>)
+2023-02-28T14:49:02.058+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" . Restarted times:  3
+2023-02-28T14:49:10.045+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" exited with err: %!s(<nil>)
+2023-02-28T14:49:10.045+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" . Restarted times:  4
+2023-02-28T14:49:10.047+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" exited with err: %!s(<nil>)
+2023-02-28T14:49:10.047+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" . Restarted times:  4
+2023-02-28T14:49:26.045+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" exited with err: %!s(<nil>)
+2023-02-28T14:49:26.045+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --web.config.file="./prometheus1.yml" --storage.tsdb.path="./data1/" . Restarted times:  5
+2023-02-28T14:49:26.046+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" exited with err: %!s(<nil>)
+2023-02-28T14:49:26.046+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --web.config.file="./prometheus2.yml" --storage.tsdb.path="./data2/" . Restarted times:  5
+2023-02-28T14:49:40.721+0800	WARN	prometheusDaemon/main.go:104	Catched a term sign, kill all child processes.  2023-02-28 14:49:40
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 15:01:12
+2023-02-28T15:01:12.398+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 2s  err: ./subapp -n 1 -i 2s start err: fork/exec ./subapp: no such file or directory
+2023-02-28T15:01:12.398+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 2s . Restarted times:  0
+2023-02-28T15:01:12.399+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 2s  err: ./subapp -n 1 -i 2s start err: fork/exec ./subapp: no such file or directory
+2023-02-28T15:01:12.399+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 2s . Restarted times:  1
+2023-02-28T15:01:14.400+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 2s  err: ./subapp -n 1 -i 2s start err: fork/exec ./subapp: no such file or directory
+2023-02-28T15:01:14.400+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 2s . Restarted times:  2
+2023-02-28T15:01:18.401+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 2s  err: ./subapp -n 1 -i 2s start err: fork/exec ./subapp: no such file or directory
+2023-02-28T15:01:18.402+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 2s . Restarted times:  3
+2023-02-28T15:02:19.048+0800	WARN	daemon/daemon.go:63	cmd:  ./subapp -n 1 -i 2s  err: cmd: ./subapp -n 1 -i 2s exited with err: %!s(<nil>)
+2023-02-28T15:02:19.048+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./subapp -n 1 -i 2s . Restarted times:  4
+2023-02-28T15:10:02.175+0800	WARN	prometheusDaemon/main.go:104	Catched a term sign, kill all child processes.  2023-02-28 15:10:02
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 15:10:08
+2023-02-28T15:10:08.588+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:10:08.588+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  0
+2023-02-28T15:10:08.588+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:10:08.588+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  0
+2023-02-28T15:10:08.618+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:10:08.618+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  1
+2023-02-28T15:10:08.619+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:10:08.619+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  1
+2023-02-28T15:10:10.627+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:10:10.627+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  2
+2023-02-28T15:10:10.627+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:10:10.627+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  2
+2023-02-28T15:10:14.641+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:10:14.641+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  3
+2023-02-28T15:10:14.641+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:10:14.641+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  3
+2023-02-28T15:10:22.637+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:10:22.637+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  4
+2023-02-28T15:10:22.638+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:10:22.638+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  4
+2023-02-28T15:10:38.634+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:10:38.634+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  5
+2023-02-28T15:10:38.636+0800	WARN	daemon/daemon.go:63	cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/"  err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:10:38.636+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  5
+2023-02-28T15:11:10.597+0800	ERROR	daemon/daemon.go:79	./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/"   limit reached
+2023-02-28T15:11:10.597+0800	ERROR	daemon/daemon.go:79	./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"   limit reached
+2023-02-28T15:15:52.683+0800	WARN	prometheusDaemon/main.go:105	Catched a term sign, kill all child processes.  2023-02-28 15:15:52
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 15:17:17
+2023-02-28T15:17:17.486+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:17:17.486+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  0
+2023-02-28T15:17:17.486+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:17:17.486+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  0
+2023-02-28T15:17:17.514+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:17:17.514+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  1
+2023-02-28T15:17:17.514+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:17:17.514+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  1
+2023-02-28T15:17:19.518+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:17:19.518+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  2
+2023-02-28T15:17:19.519+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:17:19.519+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  2
+2023-02-28T15:17:23.525+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:17:23.526+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  3
+2023-02-28T15:17:23.526+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:17:23.526+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  3
+2023-02-28T15:17:31.523+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:17:31.523+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  4
+2023-02-28T15:17:31.523+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:17:31.523+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  4
+2023-02-28T15:17:47.530+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>)
+2023-02-28T15:17:47.530+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  5
+2023-02-28T15:17:47.530+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>)
+2023-02-28T15:17:47.530+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  5
+2023-02-28T15:18:19.491+0800	ERROR	daemon/daemon.go:79	./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"   restart limit reached
+2023-02-28T15:18:19.491+0800	ERROR	daemon/daemon.go:79	./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/"   restart limit reached
+2023-02-28T15:23:10.097+0800	WARN	prometheusDaemon/main.go:105	Catched a term sign, kill all child processes.  2023-02-28 15:23:10
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 15:23:16
+2023-02-28T15:23:16.699+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:16.699+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  0
+2023-02-28T15:23:16.699+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:16.699+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  0
+2023-02-28T15:23:16.727+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:16.727+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  1
+2023-02-28T15:23:16.727+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:16.727+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  1
+2023-02-28T15:23:18.741+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:18.741+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  2
+2023-02-28T15:23:18.741+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:18.741+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  2
+2023-02-28T15:23:22.743+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:22.743+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  3
+2023-02-28T15:23:22.744+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:22.744+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  3
+2023-02-28T15:23:30.731+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:30.731+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  4
+2023-02-28T15:23:30.731+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:30.731+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  4
+2023-02-28T15:23:46.949+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:46.949+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/" . Restarted times:  5
+2023-02-28T15:23:46.949+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:23:46.949+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  5
+2023-02-28T15:24:18.704+0800	ERROR	daemon/daemon.go:79	./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"   restart limit reached
+2023-02-28T15:24:18.704+0800	ERROR	daemon/daemon.go:79	./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9090" --config.file="./cmd/prometheusArm/prometheus1.yml" --storage.tsdb.path="./cmd/prometheusArm/data1/"   restart limit reached
+2023-02-28T15:26:07.527+0800	WARN	prometheusDaemon/main.go:105	Catched a term sign, kill all child processes.  2023-02-28 15:26:07
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 15:28:15
+2023-02-28T15:28:15.707+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:28:15.707+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  0
+2023-02-28T15:28:15.734+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:28:15.734+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  1
+2023-02-28T15:28:17.740+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:28:17.740+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  2
+2023-02-28T15:28:21.754+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:28:21.754+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  3
+2023-02-28T15:28:29.766+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:28:29.766+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  4
+2023-02-28T15:28:45.777+0800	WARN	daemon/daemon.go:63	Err: cmd: ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" exited with err: %!s(<nil>), exitCode: 2
+2023-02-28T15:28:45.777+0800	WARN	daemon/daemon.go:64	restarting cmd:  ./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/" . Restarted times:  5
+2023-02-28T15:29:17.729+0800	ERROR	daemon/daemon.go:79	./cmd/prometheusArm/prometheus --web.listen-address="0.0.0.0:9091" --config.file="./cmd/prometheusArm/prometheus2.yml" --storage.tsdb.path="./cmd/prometheusArm/data2/"   restart limit reached
+2023-02-28T15:33:30.614+0800	WARN	prometheusDaemon/main.go:105	Catched a term sign, kill all child processes.  2023-02-28 15:33:30
+- - - - - - - - - - - - - - -
+Daemon started 2023-02-28 15:34:06
+2023-02-28T15:37:07.894+0800	WARN	prometheusDaemon/main.go:105	Catched a term sign, kill all child processes.  2023-02-28 15:37:07

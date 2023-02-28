@@ -1,22 +1,16 @@
-// PrometheusDaemon is a daemon for several prometheus instances
-// Functions:
-// 1. Run prometheus instances according to prometheusDaemon.yml
-// 2. Restart instances existed with errors
-// 3. generate all prometheus instances scrape job config
-// 4. kill all instances while daemon process was killed (pgid)
-
-// 不处理具体业务逻辑，只是再次按一样的参数调用自身，启动一个子进程，有子进程负责业务逻辑处理。守护进程监视子进程状态，若退出则再次启动一次。
-
 package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"prometheusDaemon/config"
 	"prometheusDaemon/daemon"
 	"syscall"
 	"time"
+
+	"context"
 
 	fork "github.com/sevlyar/go-daemon"
 	"github.com/spf13/pflag"
@@ -25,7 +19,7 @@ import (
 )
 
 const (
-	_version = "betav1.0"
+	_version = "v1.0 2023-02-28"
 )
 
 var (
@@ -59,7 +53,7 @@ func main() {
 	cntxt := newForkCtx()
 	child, err := cntxt.Reborn()
 	if err != nil {
-		logger.Fatal("Unable to run: ", err)
+		log.Fatal("Unable to run: ", err)
 	}
 	if child != nil { // 如果此时在父进程中，直接退出
 		return
@@ -75,6 +69,7 @@ RELOAD:
 	cmds := config.GenerateCmds(conf)
 	if len(cmds) == 0 {
 		logger.Fatalln("No cmd to run. Daemon existed.")
+		return
 	}
 	signal.Notify(signCh, syscall.SIGHUP, syscall.SIGTERM)
 	// cmds := []*exec.Cmd{
@@ -82,28 +77,27 @@ RELOAD:
 	// 	exec.Command("./subapp", "-n", "2", "-i", "3s"),
 	// 	exec.Command("./subapp", "-n", "3", "-i", "3s"),
 	// }
-
-	Daemon := daemon.NewDaemon(cmds, logger)
+	ctx, cancel := context.WithCancel(context.Background())
+	Daemon := daemon.NewDaemon(ctx, cmds, logger)
 	go Daemon.Run()
+
+	// 捕捉信号
 	for {
 		select {
-		// 接收exitedCmdCh中需要restart的cmd
-		case <-Daemon.Done():
-			logger.Warnln("Receive Done sig, existing.")
-			return
-		// 捕捉信号
 		case sig := <-signCh:
 			switch sig {
 			case syscall.SIGHUP:
 				logger.Infoln("Reloading configs.")
-				Daemon.Close()
+				cancel()
+				pid := os.Getpid()
+				syscall.Kill(-pid, syscall.SIGTERM)
 				goto RELOAD
 			case syscall.SIGTERM:
 				logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
+				cancel()
 				pid := os.Getpid()
-				close(Daemon.Done())
-				time.Sleep(2 * time.Second)
 				syscall.Kill(-pid, syscall.SIGTERM)
+				time.Sleep(2 * time.Second)
 				return
 			}
 		}
