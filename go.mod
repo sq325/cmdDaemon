@@ -1,4 +1,4 @@
-module prometheusDaemon
+module cmdDaemon
 
 go 1.19
 

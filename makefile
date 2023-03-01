@@ -1,13 +1,13 @@
 .PYONY: arm linux build
 
 build: 
-	@go build
+	@go build -o cmdDaemon
 
 darwin:
-	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o cmdDaemon
 
 linux:
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cmdDaemon
 
 run:
 	@go run ./

@@ -1,12 +1,12 @@
 package main
 
 import (
+	"cmdDaemon/config"
+	"cmdDaemon/daemon"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"prometheusDaemon/config"
-	"prometheusDaemon/daemon"
 	"syscall"
 	"time"
 
@@ -28,7 +28,7 @@ var (
 	configFile     *string = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
 	version        *bool   = pflag.BoolP("version", "v", false, "Print version information.")
 
-	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmd to run.")
+	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
 )
 
 var (
