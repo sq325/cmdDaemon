@@ -49,16 +49,39 @@ func (d *Daemon) Run() {
 	go d.run()
 
 	// 每30分钟重置所有cmd的limiter
-	ticker := time.NewTicker(30 * time.Minute)
-	defer ticker.Stop()
+	limitResetTicker := time.NewTicker(30 * time.Minute)
+	defer limitResetTicker.Stop()
 	go func() {
 		for {
 			select {
 			case <-d.ctx.Done():
 				return
-			case <-ticker.C:
+			case <-limitResetTicker.C:
 				d.resetLimiter()
 				d.Logger.Infoln("Reseted all cmd's limiter")
+			}
+		}
+	}()
+
+	// 每15分钟打印一次所有running cmd
+	printCmdTicker := time.NewTicker(15 * time.Minute)
+	defer printCmdTicker.Stop()
+	go func() {
+		for {
+			select {
+			case <-d.ctx.Done():
+				return
+			case <-printCmdTicker.C:
+				d.Logger.Infoln("Print all cmd's limiter")
+				for _, dCmd := range d.dCmds {
+					if dCmd.status == _exited {
+						continue
+					}
+					dCmd.mu.Lock()
+					d.Logger.Infoln(dCmd.cmd.String(), " ", dCmd.limiter.count)
+					dCmd.mu.Unlock()
+				}
+				printCmdTicker.Reset(15 * time.Minute)
 			}
 		}
 	}()

@@ -19,13 +19,16 @@ import (
 )
 
 const (
-	_version = "v1.1 2023-02-28"
+	_version = "v1.2 2023-03-01"
 )
 
+// flags
 var (
 	createConfFile *bool   = pflag.Bool("config.createDefault", false, "Generate a default config file.")
 	configFile     *string = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
 	version        *bool   = pflag.BoolP("version", "v", false, "Print version information.")
+
+	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmd to run.")
 )
 
 var (
@@ -47,6 +50,16 @@ func main() {
 	}
 	if *version {
 		fmt.Println(_version)
+		return
+	}
+
+	// print cmds
+	if *printCmd {
+		initConf()
+		cmds := config.GenerateCmds(conf)
+		for _, cmd := range cmds {
+			fmt.Println(cmd.String())
+		}
 		return
 	}
 
@@ -72,6 +85,7 @@ RELOAD:
 		logger.Fatalln("No cmd to run. Daemon existed.")
 		return
 	}
+
 	signal.Notify(signCh, syscall.SIGHUP, syscall.SIGTERM)
 	// cmds := []*exec.Cmd{
 	// 	exec.Command("./subapp", "-n", "1", "-i", "3s"),
