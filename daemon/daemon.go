@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	_exited = iota
-	_running
+	Exited = iota
+	Running
 )
 
 var (
@@ -24,7 +24,7 @@ type Daemon struct {
 	ctx context.Context
 
 	exitedCmdCh chan *daemonCmd
-	dCmds       []*daemonCmd
+	DCmds       []*daemonCmd
 
 	Logger *zap.SugaredLogger
 }
@@ -37,7 +37,7 @@ func NewDaemon(ctx context.Context, cmds []*exec.Cmd, logger *zap.SugaredLogger)
 	}
 	for _, cmd := range cmds {
 		dCmd := newDaemonCmd(d.ctx, cmd)
-		d.dCmds = append(d.dCmds, dCmd)
+		d.DCmds = append(d.DCmds, dCmd)
 	}
 	return d
 }
@@ -64,7 +64,7 @@ func (d *Daemon) Run() {
 	}()
 
 	// 每15分钟打印一次所有running cmd
-	printCmdTicker := time.NewTicker(15 * time.Minute)
+	printCmdTicker := time.NewTicker(20 * time.Minute)
 	defer printCmdTicker.Stop()
 	go func() {
 		for {
@@ -73,12 +73,12 @@ func (d *Daemon) Run() {
 				return
 			case <-printCmdTicker.C:
 				d.Logger.Infoln("Print all cmd's limiter")
-				for _, dCmd := range d.dCmds {
-					if dCmd.status == _exited {
+				for _, dCmd := range d.DCmds {
+					if dCmd.Status == Exited {
 						continue
 					}
 					dCmd.mu.Lock()
-					d.Logger.Infoln(dCmd.cmd.String(), " ", dCmd.limiter.count)
+					d.Logger.Infoln(dCmd.Cmd.String(), ". Pid:", dCmd.Cmd.Process.Pid, ". Restarted times:", dCmd.Limiter.count)
 					dCmd.mu.Unlock()
 				}
 				printCmdTicker.Reset(15 * time.Minute)
@@ -98,25 +98,25 @@ func (d *Daemon) Run() {
 		case dcmd := <-d.exitedCmdCh:
 			// 打印错误原因
 			dcmd.mu.Lock()
-			d.Logger.Warnln("Err:", dcmd.err)
-			d.Logger.Warnln("Restarting cmd: ", dcmd.cmd.String(), ". Restarted times: ", dcmd.limiter.count)
+			d.Logger.Warnf("Cmd %s Err: %v", dcmd.Cmd.String(), dcmd.Err)
+			d.Logger.Warnln("Restarting cmd:", dcmd.Cmd.String(), ". Restarted times:", dcmd.Limiter.count)
 			dcmd.mu.Unlock()
 			go func() {
 				select {
 				case <-d.ctx.Done():
 					return
 				// 等到下次重启时间到了再重启
-				case <-time.After(time.Until(dcmd.limiter.next())):
+				case <-time.After(time.Until(dcmd.Limiter.next())):
 					// 重启cmd
 					dcmd.update()
 					// 没超过limit，重启cmd
-					if ok := dcmd.limiter.Inc(); ok {
-						d.Logger.Warnln("Restarted!")
+					if ok := dcmd.Limiter.Inc(); ok {
+						d.Logger.Warnln("Restarted.")
 						dcmd.startAndWait(d.exitedCmdCh)
 						return
 					}
 					// 如果超过limit的次数限制，就不再重启
-					d.Logger.Errorln(dcmd.cmd.String(), " ", ErrLimitReached)
+					d.Logger.Errorln(dcmd.Cmd.String(), " ", ErrLimitReached)
 					return
 				}
 			}()
@@ -126,14 +126,27 @@ func (d *Daemon) Run() {
 
 // run start all cmds and wait for them to exit
 func (d *Daemon) run() {
-	for _, dCmd := range d.dCmds {
+	for _, dCmd := range d.DCmds {
 		go dCmd.startAndWait(d.exitedCmdCh)
 	}
 	<-d.ctx.Done()
 }
 
+// resetLimiter reset all cmds' limiter
 func (d *Daemon) resetLimiter() {
-	for _, dCmd := range d.dCmds {
-		dCmd.limiter.Reset()
+	for _, dCmd := range d.DCmds {
+		dCmd.Limiter.Reset()
+	}
+}
+
+// Reload reload all dcmds and ctx
+func (d *Daemon) Reload(ctx context.Context, cmds []*exec.Cmd) {
+	d.DCmds = make([]*daemonCmd, 0, len(cmds))
+	close(d.exitedCmdCh)
+	d.exitedCmdCh = make(chan *daemonCmd, 20)
+	d.ctx = ctx
+	for _, cmd := range cmds {
+		dCmd := newDaemonCmd(d.ctx, cmd)
+		d.DCmds = append(d.DCmds, dCmd)
 	}
 }

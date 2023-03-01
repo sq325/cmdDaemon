@@ -1,31 +1,26 @@
 cmds:
 - cmd: ./cmd/prometheusArm/prometheus
   args: 
+  - --web.listen-address
+  - "0.0.0.0:9090"
   - --web.enable-lifecycle
   - --storage.tsdb.retention
   - 7d
-  - --web.listen-address
-  - "0.0.0.0:9090"
   - --config.file
   - "./cmd/prometheusArm/prometheus1.yml"
   - --storage.tsdb.path
   - "./cmd/prometheusArm/data1/"
-- cmd: ./subapp
-  args: 
-  - -n
-  - 1
-  - -i
-  - 2s
+# - cmd: sleep
+#   args: 
+#   - 30
 - cmd: ./cmd/prometheusArm/prometheus
   args: 
+  - --web.listen-address
+  - "0.0.0.0:9091"
   - --web.enable-lifecycle
   - --storage.tsdb.retention
   - 7d
-  - --web.listen-address
-  - "0.0.0.0:9091"
   - --config.file
   - "./cmd/prometheusArm/prometheus2.yml"
   - --storage.tsdb.path
   - "./cmd/prometheusArm/data2/"
-
-

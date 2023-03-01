@@ -12,18 +12,18 @@ type daemonCmd struct {
 	mu  sync.Mutex
 	ctx context.Context
 
-	cmd     *exec.Cmd
-	limiter *Limiter // 限制重启次数
+	Cmd     *exec.Cmd
+	Limiter *Limiter // 限制重启次数
 
-	status int   // running: 1, exited: 0
-	err    error // 退出原因
+	Status int   // running: 1, exited: 0
+	Err    error // 退出原因
 }
 
 func newDaemonCmd(ctx context.Context, cmd *exec.Cmd) *daemonCmd {
 	return &daemonCmd{
 		ctx:     ctx,
-		cmd:     cmd,
-		limiter: newLimiter(),
+		Cmd:     cmd,
+		Limiter: newLimiter(),
 	}
 }
 
@@ -32,29 +32,40 @@ func (dcmd *daemonCmd) update() {
 	dcmd.mu.Lock()
 	defer dcmd.mu.Unlock()
 
-	newCmd := exec.Command(dcmd.cmd.Path, dcmd.cmd.Args[1:]...)
-	dcmd.cmd = newCmd
-	dcmd.err = nil
+	newCmd := exec.Command(dcmd.Cmd.Path, dcmd.Cmd.Args[1:]...)
+	dcmd.Cmd = newCmd
+	dcmd.Err = nil
 }
 
 // startAndWait run the cmd and update runningCmds, then wait for it to exit
 // startAndWait is producer of exitedCmdCh
 func (dcmd *daemonCmd) startAndWait(ch chan<- *daemonCmd) {
-	cmd := dcmd.cmd
+	cmd := dcmd.Cmd
 	err := cmd.Start()
 	if err != nil {
-		err = fmt.Errorf("%s start err: %s", cmd.String(), err)
-		dcmd.err = err
-		ch <- dcmd
+		err = fmt.Errorf("%s start err: %v", cmd.String(), err)
+		dcmd.Err = err
+		select {
+		case <-dcmd.ctx.Done():
+			return
+		default:
+			ch <- dcmd
+		}
 		return
 	}
-	dcmd.status = _running
+	dcmd.Status = Running
 
 	err = cmd.Wait()
 	if err != nil {
-		err := fmt.Errorf("cmd: %s exited with err: %s, exitCode: %d", dcmd.cmd.String(), dcmd.err, cmd.ProcessState.ExitCode())
-		dcmd.err = err
+		err := fmt.Errorf("cmd: %s exited with err: %v, exitCode: %d", dcmd.Cmd.String(), dcmd.Err, cmd.ProcessState.ExitCode())
+		dcmd.Err = err
 	}
-	dcmd.status = _exited
-	ch <- dcmd
+	dcmd.Status = Exited
+	// 防止ch已经close，send导致panic
+	select {
+	case <-dcmd.ctx.Done():
+		return
+	default:
+		ch <- dcmd
+	}
 }

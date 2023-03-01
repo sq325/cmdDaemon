@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	_version = "v1.2 2023-03-01"
+	_version = "v2.0 2023-03-01"
 )
 
 // flags
@@ -77,7 +77,6 @@ func main() {
 	fmt.Println("- - - - - - - - - - - - - - -")
 	fmt.Printf("Daemon started %s\n", time.Now().Format(time.DateTime))
 
-RELOAD:
 	initConf()
 	initLogger()
 	cmds := config.GenerateCmds(conf)
@@ -87,11 +86,6 @@ RELOAD:
 	}
 
 	signal.Notify(signCh, syscall.SIGHUP, syscall.SIGTERM)
-	// cmds := []*exec.Cmd{
-	// 	exec.Command("./subapp", "-n", "1", "-i", "3s"),
-	// 	exec.Command("./subapp", "-n", "2", "-i", "3s"),
-	// 	exec.Command("./subapp", "-n", "3", "-i", "3s"),
-	// }
 	ctx, cancel := context.WithCancel(context.Background())
 	Daemon := daemon.NewDaemon(ctx, cmds, logger)
 	go Daemon.Run()
@@ -102,11 +96,34 @@ RELOAD:
 		case sig := <-signCh:
 			switch sig {
 			case syscall.SIGHUP:
-				logger.Infoln("Reloading configs.")
+				// reload config
+				logger.Infoln("Reload config.")
+				initConf()
+				cmds := config.GenerateCmds(conf)
+				if len(cmds) == 0 {
+					logger.Error("No cmd to run. Do not reload.")
+					break
+				}
+				// 关闭所有子进程
 				cancel()
-				pid := os.Getpid()
-				syscall.Kill(-pid, syscall.SIGTERM)
-				goto RELOAD
+				for _, dcmd := range Daemon.DCmds {
+					if dcmd.Status == daemon.Exited {
+						continue
+					}
+					pid := dcmd.Cmd.Process.Pid
+					err := syscall.Kill(pid, syscall.SIGTERM)
+					time.Sleep(time.Second)
+					if err != nil {
+						logger.Errorf("Cmd: %s Pid: %d kill failed. %v", dcmd.Cmd.String(), pid, err)
+					}
+				}
+				logger.Infoln("Ctx canceled. All child processes killed.")
+				// reload Daemon and run new cmds
+				ctx, cancel = context.WithCancel(context.Background())
+				Daemon.Reload(ctx, cmds)
+				go Daemon.Run()
+				logger.Infoln("Reload completely.")
+			// kill all child processes
 			case syscall.SIGTERM:
 				logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
 				cancel()
