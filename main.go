@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	_version = "v2.0 2023-03-01"
+	_version = "v2.1 2023-03-01"
 )
 
 // flags
@@ -96,9 +96,22 @@ func main() {
 		case sig := <-signCh:
 			switch sig {
 			case syscall.SIGHUP:
-				// reload config
-				logger.Infoln("Reload config.")
-				initConf()
+				// 重新加载配置文件, recover initConf panic
+				logger.Infoln("Reloading config.")
+				notInitConf := false
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							logger.Errorf("Reload config failed. %v", r)
+							logger.Infoln("Panic Recover. Nothing changed.")
+							notInitConf = true
+						}
+					}()
+					initConf()
+				}()
+				if notInitConf {
+					break
+				}
 				cmds := config.GenerateCmds(conf)
 				if len(cmds) == 0 {
 					logger.Error("No cmd to run. Do not reload.")
@@ -138,6 +151,7 @@ func main() {
 
 // 守护进程上下文
 func newForkCtx() *fork.Context {
+	commandName := os.Args[0]
 	return &fork.Context{
 		PidFileName: "daemon.pid",
 		PidFilePerm: 0644,
@@ -145,7 +159,7 @@ func newForkCtx() *fork.Context {
 		LogFilePerm: 0644,
 		WorkDir:     "./",
 		Umask:       027,
-		Args:        []string{"prometheusDaemon"},
+		Args:        []string{commandName},
 	}
 }
 
@@ -170,14 +184,14 @@ func createConfigFile() {
 func initConf() {
 	configBytes, err := os.ReadFile(*configFile)
 	if err != nil {
-		log.Fatalln("Read config failed.")
+		panic("Read config failed.")
 	}
 	conf, err = config.Unmarshal(configBytes)
 	if err != nil {
-		log.Fatalln("Unmarshal config failed.")
+		panic("Unmarshal config failed.")
 	}
 	if len(conf.Cmds) == 0 {
-		log.Fatalln("No cmd found.")
+		panic("No cmd found.")
 	}
 }
 

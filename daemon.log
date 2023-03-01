@@ -778,3 +778,44 @@ Daemon started 2023-03-01 14:24:05
 2023-03-01T14:26:21.737+0800	WARN	daemon/daemon.go:114	Restarted.
 2023-03-01T14:26:23.079+0800	INFO	prometheusDaemon/main.go:105	Reload config.
 2023-03-01T14:26:25.082+0800	INFO	prometheusDaemon/main.go:125	Ctx canceled. All child processes killed.
+2023-03-01T14:32:19.966+0800	WARN	prometheusDaemon/main.go:132	Catched a term sign, kill all child processes.  2023-03-01 14:32:19
+- - - - - - - - - - - - - - -
+Daemon started 2023-03-01 18:26:48
+2023-03-01T18:27:10.726+0800	WARN	prometheusDaemon/main.go:128	Catched a term sign, kill all child processes.  2023-03-01 18:27:10
+- - - - - - - - - - - - - - -
+Daemon started 2023-03-01 19:11:17
+2023-03-01T19:11:48.649+0800	INFO	prometheusDaemon/main.go:100	Reloading config.
+Unmarshal config failed
+panic: yaml: line 16: did not find expected key
+
+goroutine 1 [running]:
+prometheusDaemon/config.Unmarshal({0x140000a0480, 0x23d, 0x23e})
+	/Users/sunquan/Documents/go/projects/prometheusDaemon/config/config.go:49 +0xd0
+main.initConf()
+	/Users/sunquan/Documents/go/projects/prometheusDaemon/main.go:189 +0x34
+main.main.func1(0x14000127d56)
+	/Users/sunquan/Documents/go/projects/prometheusDaemon/main.go:103 +0x28
+main.main()
+	/Users/sunquan/Documents/go/projects/prometheusDaemon/main.go:111 +0x514
+- - - - - - - - - - - - - - -
+Daemon started 2023-03-01 19:14:03
+Unmarshal config failed
+panic: yaml: line 16: did not find expected key
+
+goroutine 1 [running]:
+prometheusDaemon/config.Unmarshal({0x14000110240, 0x23d, 0x23e})
+	/Users/sunquan/Documents/go/projects/prometheusDaemon/config/config.go:49 +0xd0
+main.initConf()
+	/Users/sunquan/Documents/go/projects/prometheusDaemon/main.go:189 +0x34
+main.main()
+	/Users/sunquan/Documents/go/projects/prometheusDaemon/main.go:80 +0x28c
+- - - - - - - - - - - - - - -
+Daemon started 2023-03-01 19:14:11
+2023-03-01T19:14:31.111+0800	INFO	prometheusDaemon/main.go:100	Reloading config.
+2023-03-01T19:14:33.114+0800	INFO	prometheusDaemon/main.go:133	Ctx canceled. All child processes killed.
+2023-03-01T19:14:33.114+0800	INFO	prometheusDaemon/main.go:138	Reload completely.
+2023-03-01T19:14:56.039+0800	INFO	prometheusDaemon/main.go:100	Reloading config.
+Unmarshal config failed
+2023-03-01T19:14:56.039+0800	ERROR	prometheusDaemon/main.go:105	Reload config failed. yaml: line 16: did not find expected key
+2023-03-01T19:14:56.039+0800	INFO	prometheusDaemon/main.go:106	Panic Recover. Nothing changed.
+2023-03-01T19:15:29.383+0800	WARN	prometheusDaemon/main.go:141	Catched a term sign, kill all child processes.  2023-03-01 19:15:29
