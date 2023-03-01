@@ -98,18 +98,18 @@ func main() {
 			case syscall.SIGHUP:
 				// 重新加载配置文件, recover initConf panic
 				logger.Infoln("Reloading config.")
-				notInitConf := false
+				var initConfPanic bool
 				func() {
 					defer func() {
 						if r := recover(); r != nil {
 							logger.Errorf("Reload config failed. %v", r)
 							logger.Infoln("Panic Recover. Nothing changed.")
-							notInitConf = true
+							initConfPanic = true
 						}
 					}()
 					initConf()
 				}()
-				if notInitConf {
+				if initConfPanic {
 					break
 				}
 				cmds := config.GenerateCmds(conf)
