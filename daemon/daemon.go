@@ -75,6 +75,7 @@ func (d *Daemon) Run() {
 				d.Logger.Infoln("Print all cmd's limiter")
 				for _, dCmd := range d.DCmds {
 					if dCmd.Status == Exited {
+						d.Logger.Errorln("Cmd:", dCmd.Cmd.String(), "exited")
 						continue
 					}
 					dCmd.mu.Lock()
