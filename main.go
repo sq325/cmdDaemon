@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	_version = "v2.3 2023-03-02"
+	_version = "v2.4 2023-03-02"
 )
 
 // flags
@@ -87,6 +87,16 @@ func main() {
 
 	signal.Notify(signCh, syscall.SIGHUP, syscall.SIGTERM)
 	ctx, cancel := context.WithCancel(context.Background())
+
+	// 防止子进程成为僵尸进程
+	// forbid zombie process
+	defer func() {
+		pid := os.Getpid()
+		cancel()
+		syscall.Kill(-pid, syscall.SIGTERM)
+		time.Sleep(2 * time.Second)
+	}()
+
 	Daemon := daemon.NewDaemon(ctx, cmds, logger)
 	go Daemon.Run()
 
@@ -140,10 +150,7 @@ func main() {
 			case syscall.SIGTERM:
 				logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
 				cancel()
-				pid := os.Getpid()
-				syscall.Kill(-pid, syscall.SIGTERM)
-				time.Sleep(2 * time.Second)
-				return
+				return // defer 会kill所有子进程
 			}
 		}
 	}
