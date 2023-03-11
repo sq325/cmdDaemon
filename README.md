@@ -19,7 +19,7 @@
 ## 使用
 
 ```bash
-make build
+make build # 编译
 ./cmdDaemon --config.createDefault # 生成默认配置文件。需手动添加要启动的cmd
 ./cmdDaemon # 运行
 ```
