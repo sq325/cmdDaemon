@@ -151,3 +151,24 @@ func (d *Daemon) Reload(ctx context.Context, cmds []*exec.Cmd) {
 		d.DCmds = append(d.DCmds, dCmd)
 	}
 }
+
+// GetDCmds return all dcmds
+func (d *Daemon) GetDCmds() []*daemonCmd {
+	return d.DCmds
+}
+
+// cmdsLen return the number of cmds
+func (d *Daemon) cmdsLen() int {
+	return len(d.DCmds)
+}
+
+// GetExitedCmdLen return the number of exited cmds
+func (d *Daemon) GetExitedCmdLen() int {
+	var count int
+	for _, dcmd := range d.DCmds {
+		if dcmd.Status == Exited {
+			count++
+		}
+	}
+	return count
+}

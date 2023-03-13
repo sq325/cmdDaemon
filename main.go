@@ -3,10 +3,12 @@ package main
 import (
 	"cmdDaemon/config"
 	"cmdDaemon/daemon"
+	"cmdDaemon/web/handler"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -19,7 +21,7 @@ import (
 )
 
 const (
-	_version = "v2.4 2023-03-02"
+	_version = "v2.4 2023-03-13"
 )
 
 // flags
@@ -27,6 +29,7 @@ var (
 	createConfFile *bool   = pflag.Bool("config.createDefault", false, "Generate a default config file.")
 	configFile     *string = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
 	version        *bool   = pflag.BoolP("version", "v", false, "Print version information.")
+	port           *string = pflag.StringP("port", "p", "9090", "Port to listen.")
 
 	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
 )
@@ -97,8 +100,19 @@ func main() {
 		time.Sleep(2 * time.Second)
 	}()
 
-	Daemon := daemon.NewDaemon(ctx, cmds, logger)
-	go Daemon.Run()
+	// 初始化Daemon, 单例
+	DaemonOnce := struct {
+		sync.Once
+		Daemon *daemon.Daemon
+	}{}
+	DaemonOnce.Do(func() {
+		DaemonOnce.Daemon = daemon.NewDaemon(ctx, cmds, logger)
+	})
+	go DaemonOnce.Daemon.Run()
+
+	// 初始化handler
+	handler := handler.NewHandler(logger, DaemonOnce.Daemon)
+	go handler.Listen(*port)
 
 	// 捕捉信号
 	for {
@@ -107,7 +121,6 @@ func main() {
 			switch sig {
 			case syscall.SIGHUP:
 				// 重新加载配置文件, recover initConf panic
-				logger.Infoln("Reloading config.")
 				var initConfPanic bool
 				func() {
 					defer func() {
@@ -122,6 +135,7 @@ func main() {
 				if initConfPanic {
 					break
 				}
+				logger.Infoln("Reloaded config.")
 				cmds := config.GenerateCmds(conf)
 				if len(cmds) == 0 {
 					logger.Error("No cmd to run. Do not reload.")
@@ -129,7 +143,7 @@ func main() {
 				}
 				// 关闭所有子进程
 				cancel()
-				for _, dcmd := range Daemon.DCmds {
+				for _, dcmd := range DaemonOnce.Daemon.DCmds {
 					if dcmd.Status == daemon.Exited {
 						continue
 					}
@@ -143,9 +157,9 @@ func main() {
 				logger.Infoln("Ctx canceled. All child processes killed.")
 				// reload Daemon and run new cmds
 				ctx, cancel = context.WithCancel(context.Background())
-				Daemon.Reload(ctx, cmds)
-				go Daemon.Run()
-				logger.Infoln("Reload completely.")
+				DaemonOnce.Daemon.Reload(ctx, cmds)
+				go DaemonOnce.Daemon.Run()
+				logger.Infoln("Restart completely.")
 			// kill all child processes
 			case syscall.SIGTERM:
 				logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
