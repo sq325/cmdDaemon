@@ -90,3 +90,10 @@ func GitPull() error {
 	err := cmd.Run()
 	return err
 }
+
+func CmdsAndPorts() {
+	cmd := exec.Command("ps", "aux")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}

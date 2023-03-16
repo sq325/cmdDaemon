@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	_version = "v2.4 2023-03-13"
+	_version = "v3.0 2023-03-16"
 )
 
 // flags
@@ -101,17 +101,17 @@ func main() {
 	}()
 
 	// 初始化Daemon, 单例
-	DaemonOnce := struct {
+	OnceDaemon := struct {
 		sync.Once
 		Daemon *daemon.Daemon
 	}{}
-	DaemonOnce.Do(func() {
-		DaemonOnce.Daemon = daemon.NewDaemon(ctx, cmds, logger)
+	OnceDaemon.Do(func() {
+		OnceDaemon.Daemon = daemon.NewDaemon(ctx, cmds, logger)
 	})
-	go DaemonOnce.Daemon.Run()
+	go OnceDaemon.Daemon.Run()
 
 	// 初始化handler
-	handler := handler.NewHandler(logger, DaemonOnce.Daemon)
+	handler := handler.NewHandler(logger, OnceDaemon.Daemon)
 	go handler.Listen(*port)
 
 	// 捕捉信号
@@ -132,9 +132,10 @@ func main() {
 					}()
 					initConf()
 				}()
-				if initConfPanic {
+				if initConfPanic { // if initConf panic, do not reload
 					break
 				}
+
 				logger.Infoln("Reloaded config.")
 				cmds := config.GenerateCmds(conf)
 				if len(cmds) == 0 {
@@ -143,22 +144,43 @@ func main() {
 				}
 				// 关闭所有子进程
 				cancel()
-				for _, dcmd := range DaemonOnce.Daemon.DCmds {
+				var wg sync.WaitGroup
+				for _, dcmd := range OnceDaemon.Daemon.DCmds {
+					dcmd := dcmd // capture range variable
 					if dcmd.Status == daemon.Exited {
 						continue
 					}
 					pid := dcmd.Cmd.Process.Pid
 					err := syscall.Kill(pid, syscall.SIGTERM)
-					time.Sleep(time.Second)
 					if err != nil {
 						logger.Errorf("Cmd: %s Pid: %d kill failed. %v", dcmd.Cmd.String(), pid, err)
 					}
+
+					// wait for child process exited
+					// if not exited, kill it after 10s
+					wg.Add(1)
+					go func() {
+						// wait for child process exited
+						isExited := dcmd.Cmd.ProcessState.Exited()
+						ch := make(chan struct{}, 1)
+						if isExited {
+							ch <- struct{}{}
+						}
+						select {
+						case <-ch:
+						case <-time.After(10 * time.Second):
+							dcmd.Cmd.Process.Kill()
+						}
+						wg.Done()
+					}()
 				}
+				wg.Wait()
 				logger.Infoln("Ctx canceled. All child processes killed.")
+
 				// reload Daemon and run new cmds
 				ctx, cancel = context.WithCancel(context.Background())
-				DaemonOnce.Daemon.Reload(ctx, cmds)
-				go DaemonOnce.Daemon.Run()
+				OnceDaemon.Daemon.Reload(ctx, cmds)
+				go OnceDaemon.Daemon.Run()
 				logger.Infoln("Restart completely.")
 			// kill all child processes
 			case syscall.SIGTERM:
