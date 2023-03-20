@@ -7,8 +7,8 @@ import (
 	"sync"
 )
 
-// daemonCmd is a cmd that managed by daemon
-type daemonCmd struct {
+// DaemonCmd is a cmd that managed by daemon
+type DaemonCmd struct {
 	mu  sync.Mutex
 	ctx context.Context
 
@@ -19,8 +19,8 @@ type daemonCmd struct {
 	Err    error // 退出原因
 }
 
-func newDaemonCmd(ctx context.Context, cmd *exec.Cmd) *daemonCmd {
-	return &daemonCmd{
+func newDaemonCmd(ctx context.Context, cmd *exec.Cmd) *DaemonCmd {
+	return &DaemonCmd{
 		ctx:     ctx,
 		Cmd:     cmd,
 		Limiter: newLimiter(),
@@ -28,7 +28,7 @@ func newDaemonCmd(ctx context.Context, cmd *exec.Cmd) *daemonCmd {
 }
 
 // update reset the cmd, status and err fields for restarting
-func (dcmd *daemonCmd) update() {
+func (dcmd *DaemonCmd) update() {
 	dcmd.mu.Lock()
 	defer dcmd.mu.Unlock()
 
@@ -39,7 +39,7 @@ func (dcmd *daemonCmd) update() {
 
 // startAndWait run the cmd and update runningCmds, then wait for it to exit
 // startAndWait is producer of exitedCmdCh
-func (dcmd *daemonCmd) startAndWait(ch chan<- *daemonCmd) {
+func (dcmd *DaemonCmd) startAndWait(ch chan<- *DaemonCmd) {
 	cmd := dcmd.Cmd
 	err := cmd.Start()
 	if err != nil {

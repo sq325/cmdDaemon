@@ -23,8 +23,8 @@ var (
 type Daemon struct {
 	ctx context.Context
 
-	exitedCmdCh chan *daemonCmd
-	DCmds       []*daemonCmd
+	exitedCmdCh chan *DaemonCmd
+	DCmds       []*DaemonCmd
 
 	Logger *zap.SugaredLogger
 }
@@ -33,7 +33,7 @@ func NewDaemon(ctx context.Context, cmds []*exec.Cmd, logger *zap.SugaredLogger)
 	d := &Daemon{
 		ctx:         ctx,
 		Logger:      logger,
-		exitedCmdCh: make(chan *daemonCmd, 20),
+		exitedCmdCh: make(chan *DaemonCmd, 20),
 	}
 	for _, cmd := range cmds {
 		dCmd := newDaemonCmd(d.ctx, cmd)
@@ -142,9 +142,9 @@ func (d *Daemon) resetLimiter() {
 
 // Reload reload all dcmds and ctx
 func (d *Daemon) Reload(ctx context.Context, cmds []*exec.Cmd) {
-	d.DCmds = make([]*daemonCmd, 0, len(cmds))
+	d.DCmds = make([]*DaemonCmd, 0, len(cmds))
 	close(d.exitedCmdCh)
-	d.exitedCmdCh = make(chan *daemonCmd, 20)
+	d.exitedCmdCh = make(chan *DaemonCmd, 20)
 	d.ctx = ctx
 	for _, cmd := range cmds {
 		dCmd := newDaemonCmd(d.ctx, cmd)
@@ -153,7 +153,7 @@ func (d *Daemon) Reload(ctx context.Context, cmds []*exec.Cmd) {
 }
 
 // GetDCmds return all dcmds
-func (d *Daemon) GetDCmds() []*daemonCmd {
+func (d *Daemon) GetDCmds() []*DaemonCmd {
 	return d.DCmds
 }
 

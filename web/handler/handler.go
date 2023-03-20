@@ -2,9 +2,12 @@ package handler
 
 import (
 	"cmdDaemon/daemon"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -27,8 +30,9 @@ func NewHandler(logger *zap.SugaredLogger, d *daemon.Daemon) *Handler {
 
 // RegisterHandleFunc register all http hanler funcs
 func (h *Handler) RegisterHandleFunc() {
-	http.HandleFunc("/reload", h.Reload)
-	http.HandleFunc("/restart", h.ReloadDaemon)
+	http.HandleFunc("/reload", h.Reload)        // reload child processes
+	http.HandleFunc("/restart", h.ReloadDaemon) // reload daemon process and child processes
+	http.HandleFunc("/list", h.ListPortAndCmd)  // list all port and cmd
 }
 
 // Listen start register handleFuncs and start a http server
@@ -68,6 +72,53 @@ func (h *Handler) Reload(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func PortCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
+	var portCmd = make(map[string]string, len(dcmds))
+	var spacePattern = regexp.MustCompile(`\s+`)
+
+	// run lsof
+	allTCP, err := exec.Command("lsof", "-PiTCP").Output()
+	if err != nil {
+		return nil, fmt.Errorf("lsof err: %v", err)
+	}
+	allTCPSlice := strings.Split(string(allTCP), "\n")
+	if len(allTCPSlice) == 0 || len(portCmd) == 0 {
+		return nil, nil
+	}
+
+	// generate portCmd
+	for _, dcmd := range dcmds {
+		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
+		for _, line := range allTCPSlice {
+			port := "null"
+			if strings.Contains(line, pid) {
+				lineSlice := spacePattern.Split(line, -1)
+				port = lineSlice[len(lineSlice)-2]
+			}
+			portCmd[port] = dcmd.Cmd.String()
+		}
+	}
+
+	return portCmd, nil
+}
+
+func (h *Handler) ListPortAndCmd(w http.ResponseWriter, req *http.Request) {
+	portCmd, err := PortCmdMap(h.Daemon.DCmds)
+	if err != nil {
+		h.logger.Error("PortCmdMap err:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if portCmd == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	for port, cmd := range portCmd {
+		w.Write([]byte(port + " " + cmd))
+	}
+}
+
 // Restart sends a SIGHUP to the daemon process
 func Restart() {
 	pid := os.Getpid()
@@ -89,11 +140,4 @@ func GitPull() error {
 
 	err := cmd.Run()
 	return err
-}
-
-func CmdsAndPorts() {
-	cmd := exec.Command("ps", "aux")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
 }
