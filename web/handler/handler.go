@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -33,6 +32,7 @@ func (h *Handler) RegisterHandleFunc() {
 	http.HandleFunc("/reload", h.Reload)        // reload child processes
 	http.HandleFunc("/restart", h.ReloadDaemon) // reload daemon process and child processes
 	http.HandleFunc("/list", h.ListPortAndCmd)  // list all port and cmd
+	http.HandleFunc("/update", h.UpdateConfig)  // update config file
 }
 
 // Listen start register handleFuncs and start a http server
@@ -50,7 +50,30 @@ func (h *Handler) ReloadDaemon(w http.ResponseWriter, req *http.Request) {
 	} else {
 		h.logger.Info("git pull success")
 	}
-	Restart()
+	restart()
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("ReloadDaemon Success"))
+}
+
+func (h *Handler) Restart(w http.ResponseWriter, req *http.Request) {
+	// if has update, git pull
+	if err := req.ParseForm(); err != nil {
+		h.logger.Error("ParseForm err:", err)
+	}
+	if hasUpdate := req.Form.Has("update"); hasUpdate {
+		err := GitPull()
+		if err != nil {
+			h.logger.Error("git pull err:", err)
+			w.Write([]byte("git pull err\n"))
+		} else {
+			h.logger.Info("git pull success")
+			w.Write([]byte("git pull success\n"))
+		}
+	}
+
+	restart()
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Restart Success"))
 }
 
 // Reload send SIGHUP signal to all cmds processes except daemon process
@@ -61,47 +84,34 @@ func (h *Handler) Reload(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// if has update, git pull
+	if err := req.ParseForm(); err != nil {
+		h.logger.Error("ParseForm err:", err)
+	}
+	if hasUpdate := req.Form.Has("update"); hasUpdate {
+		err := GitPull()
+		if err != nil {
+			h.logger.Error("git pull err:", err)
+			w.Write([]byte("git pull err\n"))
+
+		} else {
+			h.logger.Info("git pull success")
+			w.Write([]byte("git pull success\n"))
+		}
+	}
+
 	for _, dcmd := range h.Daemon.DCmds {
 		if dcmd.Status == daemon.Exited {
 			continue
 		}
 		pid := dcmd.Cmd.Process.Pid
 		syscall.Kill(pid, syscall.SIGHUP)
-		time.Sleep(time.Second)
 	}
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Reload Success"))
 }
 
-func PortCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
-	var portCmd = make(map[string]string, len(dcmds))
-	var spacePattern = regexp.MustCompile(`\s+`)
-
-	// run lsof
-	allTCP, err := exec.Command("lsof", "-PiTCP").Output()
-	if err != nil {
-		return nil, fmt.Errorf("lsof err: %v", err)
-	}
-	allTCPSlice := strings.Split(string(allTCP), "\n")
-	if len(allTCPSlice) == 0 || len(portCmd) == 0 {
-		return nil, nil
-	}
-
-	// generate portCmd
-	for _, dcmd := range dcmds {
-		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
-		for _, line := range allTCPSlice {
-			port := "null"
-			if strings.Contains(line, pid) {
-				lineSlice := spacePattern.Split(line, -1)
-				port = lineSlice[len(lineSlice)-2]
-			}
-			portCmd[port] = dcmd.Cmd.String()
-		}
-	}
-
-	return portCmd, nil
-}
-
+// ListPortAndCmd list all cmd and listen port
 func (h *Handler) ListPortAndCmd(w http.ResponseWriter, req *http.Request) {
 	portCmd, err := PortCmdMap(h.Daemon.DCmds)
 	if err != nil {
@@ -117,10 +127,23 @@ func (h *Handler) ListPortAndCmd(w http.ResponseWriter, req *http.Request) {
 	for port, cmd := range portCmd {
 		w.Write([]byte(port + " " + cmd))
 	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("List Done"))
+}
+
+func (h *Handler) UpdateConfig(w http.ResponseWriter, req *http.Request) {
+	err := GitPull()
+	if err != nil {
+		h.logger.Error("git pull err:", err)
+		w.Write([]byte("git pull err"))
+	} else {
+		h.logger.Info("git pull success")
+		w.Write([]byte("git pull success"))
+	}
 }
 
 // Restart sends a SIGHUP to the daemon process
-func Restart() {
+func restart() {
 	pid := os.Getpid()
 	syscall.Kill(pid, syscall.SIGHUP)
 }
@@ -140,4 +163,38 @@ func GitPull() error {
 
 	err := cmd.Run()
 	return err
+}
+
+// PortCmdMap return a map of port and cmd
+func PortCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
+	if len(dcmds) == 0 {
+		return nil, nil
+	}
+	var portCmd = make(map[string]string, len(dcmds))
+	var spacePattern = regexp.MustCompile(`\s+`)
+
+	// generate portCmd
+	for _, dcmd := range dcmds {
+		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
+		pidListen, err := exec.Command("sh", "-c", "lsof -Pp "+pid+" | grep LISTEN").Output()
+		if err != nil {
+			return nil, fmt.Errorf("lsof err: %v", err)
+		}
+		pidListenS := strings.Split(string(pidListen), "\n")
+
+		port := "null"
+		for _, line := range pidListenS {
+			if strings.Contains(line, "LISTEN") {
+				lineSlice := spacePattern.Split(line, -1)
+				if len(lineSlice) < 2 {
+					continue
+				}
+				port = lineSlice[len(lineSlice)-2]
+				break
+			}
+		}
+		portCmd[port] = dcmd.Cmd.String()
+	}
+
+	return portCmd, nil
 }

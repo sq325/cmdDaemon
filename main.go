@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	_version = "v3.0 2023-03-16"
+	_version = "v3.1 2023-03-21"
 )
 
 // flags
@@ -29,7 +29,7 @@ var (
 	createConfFile *bool   = pflag.Bool("config.createDefault", false, "Generate a default config file.")
 	configFile     *string = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
 	version        *bool   = pflag.BoolP("version", "v", false, "Print version information.")
-	port           *string = pflag.StringP("port", "p", "9090", "Port to listen.")
+	port           *string = pflag.String("web.port", "9090", "Port to listen.")
 
 	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
 )
@@ -160,7 +160,11 @@ func main() {
 					// if not exited, kill it after 10s
 					wg.Add(1)
 					go func() {
+						defer wg.Done()
 						// wait for child process exited
+						if dcmd.Cmd == nil || dcmd.Cmd.ProcessState == nil {
+							return
+						}
 						isExited := dcmd.Cmd.ProcessState.Exited()
 						ch := make(chan struct{}, 1)
 						if isExited {
@@ -171,7 +175,6 @@ func main() {
 						case <-time.After(10 * time.Second):
 							dcmd.Cmd.Process.Kill()
 						}
-						wg.Done()
 					}()
 				}
 				wg.Wait()
