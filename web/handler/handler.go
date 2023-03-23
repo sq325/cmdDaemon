@@ -127,18 +127,18 @@ func (h *Handler) Reload(w http.ResponseWriter, req *http.Request) {
 
 // ListPortAndCmd list all cmd and listen port
 func (h *Handler) ListPortAndCmd(w http.ResponseWriter, req *http.Request) {
-	portCmd, err := PortCmdMap(h.Daemon.DCmds)
+	addrCmd, err := AddrCmdMap(h.Daemon.DCmds)
 	if err != nil {
-		h.logger.Error("PortCmdMap err:", err)
+		h.logger.Error("AddrCmdMap err:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if portCmd == nil {
+	if addrCmd == nil {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	for addr, cmd := range portCmd {
+	for addr, cmd := range addrCmd {
 		port := addr
 		url, err := url.Parse("http://" + addr)
 		if err != nil {
@@ -198,39 +198,39 @@ func GitPull() error {
 	return err
 }
 
-// PortCmdMap return a map of port and cmd
-func PortCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
+// AddrCmdMap return a map of port and cmd
+func AddrCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
 	if len(dcmds) == 0 {
 		return nil, nil
 	}
-	var portCmd = make(map[string]string, len(dcmds))
+	var addrCmd = make(map[string]string, len(dcmds))
 	var spacePattern = regexp.MustCompile(`\s+`)
+	out, err := exec.Command("lsof", "-Pi", "TCP", "-s", "TCP:LISTEN").Output()
+	if err != nil {
+		return nil, fmt.Errorf("lsof err: %v", err)
+	}
+	outS := strings.Split(string(out), "\n")
+	var pidAddr = make(map[string]string, len(outS))
+	for _, line := range outS {
+		lineSlice := spacePattern.Split(line, -1)
+		if len(lineSlice) < 2 {
+			continue
+		}
+		addr := lineSlice[len(lineSlice)-2]
+		pid := lineSlice[1]
+		pidAddr[pid] = addr
+	}
 
-	// generate portCmd
 	for _, dcmd := range dcmds {
 		if dcmd.Cmd == nil || dcmd.Cmd.Process == nil {
 			continue
 		}
 		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
-		pidListen, err := exec.Command("sh", "-c", "lsof -Pp "+pid+" | grep LISTEN").Output()
-		if err != nil {
-			return nil, fmt.Errorf("lsof err: %v", err)
-		}
-		pidListenS := strings.Split(string(pidListen), "\n")
 
-		port := "null"
-		for _, line := range pidListenS {
-			if strings.Contains(line, "LISTEN") {
-				lineSlice := spacePattern.Split(line, -1)
-				if len(lineSlice) < 2 {
-					continue
-				}
-				port = lineSlice[len(lineSlice)-2]
-				break
-			}
+		if addr, ok := pidAddr[pid]; ok {
+			addrCmd[addr] = dcmd.Cmd.String()
 		}
-		portCmd[port] = dcmd.Cmd.String()
 	}
 
-	return portCmd, nil
+	return addrCmd, nil
 }
