@@ -31,11 +31,11 @@ func NewHandler(logger *zap.SugaredLogger, d *daemon.Daemon) *Handler {
 
 // RegisterHandleFunc register all http hanler funcs
 func (h *Handler) RegisterHandleFunc() {
-	http.HandleFunc("/reload", h.Reload)        // reload child processes
-	http.HandleFunc("/restart", h.ReloadDaemon) // reload daemon process and child processes
-	http.HandleFunc("/list", h.ListPortAndCmd)  // list all port and cmd
-	http.HandleFunc("/update", h.UpdateConfig)  // update config file
-	http.HandleFunc("/stop", h.Stop)            // stop daemon process
+	http.HandleFunc("/reload", h.Reload)       // reload child processes
+	http.HandleFunc("/restart", h.Restart)     // reload daemon process and child processes
+	http.HandleFunc("/list", h.ListPortAndCmd) // list all port and cmd
+	http.HandleFunc("/update", h.UpdateConfig) // update config file
+	http.HandleFunc("/stop", h.Stop)           // stop daemon process
 }
 
 // Listen start register handleFuncs and start a http server
@@ -46,19 +46,24 @@ func (h *Handler) Listen(port string) {
 
 // ReloadDaemon git pull origin master and restart daemon process
 // /restart
-func (h *Handler) ReloadDaemon(w http.ResponseWriter, req *http.Request) {
-	err := GitPull()
-	if err != nil {
-		h.logger.Error("git pull err:", err)
-	} else {
-		h.logger.Info("git pull success")
-	}
-	restart()
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ReloadDaemon Success"))
-}
+// func (h *Handler) ReloadDaemon(w http.ResponseWriter, req *http.Request) {
+// 	err := GitPull()
+// 	if err != nil {
+// 		h.logger.Error("git pull err:", err)
+// 	} else {
+// 		h.logger.Info("git pull success")
+// 	}
+// 	restart()
+// 	w.WriteHeader(http.StatusOK)
+// 	w.Write([]byte("ReloadDaemon Success"))
+// }
 
 func (h *Handler) Restart(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("Method Not Allowed, only support POST method"))
+		return
+	}
 	// if has update, git pull
 	if err := req.ParseForm(); err != nil {
 		h.logger.Error("ParseForm err:", err)
@@ -82,6 +87,12 @@ func (h *Handler) Restart(w http.ResponseWriter, req *http.Request) {
 // Reload send SIGHUP signal to all cmds processes except daemon process
 // /reload
 func (h *Handler) Reload(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("Method Not Allowed, only support POST method"))
+		return
+	}
+	w.Write([]byte("Only reload child processes\n"))
 	if len(h.Daemon.DCmds) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -153,6 +164,11 @@ func (h *Handler) UpdateConfig(w http.ResponseWriter, req *http.Request) {
 }
 
 func (h *Handler) Stop(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("Method Not Allowed, only support POST method"))
+		return
+	}
 	pid := os.Getpid()
 	syscall.Kill(pid, syscall.SIGTERM)
 	w.WriteHeader(http.StatusOK)
@@ -192,6 +208,9 @@ func PortCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
 
 	// generate portCmd
 	for _, dcmd := range dcmds {
+		if dcmd.Cmd == nil || dcmd.Cmd.Process == nil {
+			continue
+		}
 		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
 		pidListen, err := exec.Command("sh", "-c", "lsof -Pp "+pid+" | grep LISTEN").Output()
 		if err != nil {
