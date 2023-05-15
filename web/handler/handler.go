@@ -149,7 +149,7 @@ func (h *Handler) ListPortAndCmd(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte(port + " " + cmd + "\n"))
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("List Done"))
+	w.Write([]byte("All " + strconv.Itoa(len(h.Daemon.DCmds)) + " List " + strconv.Itoa(len(addrCmd))))
 }
 
 func (h *Handler) UpdateConfig(w http.ResponseWriter, req *http.Request) {
@@ -183,7 +183,14 @@ func restart() {
 
 // GitPull git pull origin master without SSH_ASKPASS
 func GitPull() error {
+	checkoutCmd := exec.Command("git", "checkout", "master")
 	cmd := exec.Command("git", "pull", "origin", "master")
+
+	// git checkout
+	err := checkoutCmd.Run()
+	if err != nil {
+		return fmt.Errorf("git checkout err: %v", err)
+	}
 
 	// delete SSH_ASKPASS
 	cmdEnv := os.Environ()
@@ -194,7 +201,7 @@ func GitPull() error {
 	}
 	cmd.Env = cmdEnv
 
-	err := cmd.Run()
+	err = cmd.Run()
 	return err
 }
 
