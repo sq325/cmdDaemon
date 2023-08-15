@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	_version = "v3.4 2023-03-23"
+	_version = "v3.5 2023-05-15"
 )
 
 // flags
