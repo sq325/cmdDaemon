@@ -36,6 +36,7 @@ func (h *Handler) RegisterHandleFunc() {
 	http.HandleFunc("/list", h.ListPortAndCmd) // list all port and cmd
 	http.HandleFunc("/update", h.UpdateConfig) // update config file
 	http.HandleFunc("/stop", h.Stop)           // stop daemon process
+	http.HandleFunc("/consulsvc", h.ConsulSvc) // consul service config")
 }
 
 // Listen start register handleFuncs and start a http server
@@ -179,6 +180,11 @@ func (h *Handler) Stop(w http.ResponseWriter, req *http.Request) {
 func restart() {
 	pid := os.Getpid()
 	syscall.Kill(pid, syscall.SIGHUP)
+}
+
+// Generate consul service config
+func (h *Handler) ConsulSvc(w http.ResponseWriter, req *http.Request) {
+
 }
 
 // GitPull git pull origin master without SSH_ASKPASS
