@@ -145,6 +145,9 @@ func (h *Handler) ListPortAndCmd(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			h.logger.Error("Parse addr ", addr, " err:", err)
 		} else {
+			if url == nil {
+				url = &url.URL{}
+			}
 			port = url.Port()
 		}
 		w.Write([]byte(port + " " + cmd + "\n"))
@@ -217,7 +220,28 @@ func AddrCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
 		return nil, nil
 	}
 	var addrCmd = make(map[string]string, len(dcmds))
+	pidAddr, err := pidAddr()
+	if err != nil {
+		return nil, fmt.Errorf("pidAddr err: %w", err)
+	}
+
+	for _, dcmd := range dcmds {
+		if dcmd.Cmd == nil || dcmd.Cmd.Process == nil {
+			continue
+		}
+		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
+
+		if addr, ok := pidAddr[pid]; ok {
+			addrCmd[addr] = dcmd.Cmd.String()
+		}
+	}
+
+	return addrCmd, nil
+}
+
+func pidAddr() (map[string]string, error) {
 	var spacePattern = regexp.MustCompile(`\s+`)
+
 	out, err := exec.Command("lsof", "-Pi", "TCP", "-s", "TCP:LISTEN").Output()
 	if err != nil {
 		return nil, fmt.Errorf("lsof err: %v", err)
@@ -233,17 +257,6 @@ func AddrCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
 		pid := lineSlice[1]
 		pidAddr[pid] = addr
 	}
+	return pidAddr, nil
 
-	for _, dcmd := range dcmds {
-		if dcmd.Cmd == nil || dcmd.Cmd.Process == nil {
-			continue
-		}
-		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
-
-		if addr, ok := pidAddr[pid]; ok {
-			addrCmd[addr] = dcmd.Cmd.String()
-		}
-	}
-
-	return addrCmd, nil
 }
