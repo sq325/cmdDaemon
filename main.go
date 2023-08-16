@@ -7,8 +7,11 @@ import (
 	"cmdDaemon/web/handler"
 	"fmt"
 	"log"
+	"net"
+	"net/netip"
 	"os"
 	"os/signal"
+	"sort"
 	"sync"
 	"syscall"
 	"time"
@@ -267,4 +270,32 @@ func servicesRegister(addr string, node *register.Node, dcmds []*daemon.DaemonCm
 
 func serviceDeregister(addr string, node *register.Node, dcmds []*daemon.DaemonCmd) error {
 
+}
+
+func hostAdmIp() string {
+	intf, _ := net.InterfaceByName("en0")
+	addrs, _ := intf.Addrs()
+	addrList := make([]netip.Addr, 0)
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
+			addr, ok := netip.AddrFromSlice(ipNet.IP)
+			if !ok {
+				fmt.Println("AddrFromSlice failed.")
+			}
+			addrList = append(addrList, addr)
+		}
+	}
+	if len(addrList) == 0 {
+		return ""
+	}
+	addrList = sortAddrList(addrList)
+	return addrList[0].String()
+}
+
+func sortAddrList(addrList []netip.Addr) []netip.Addr {
+	sort.Slice(addrList, func(i, j int) bool {
+		return addrList[i].Less(addrList[j])
+	})
+	return addrList
 }
