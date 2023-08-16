@@ -13,51 +13,55 @@
 package register
 
 import (
-  "os"
-  "text/template"
+	"cmdDaemon/daemon"
+	"os"
+	"text/template"
 )
 
 type Consul struct {
-  ServerAddr  string
-  Node        *Node
-  ServiceList []*Service
+	ServerAddr  string
+	Node        *Node
+	ServiceList []*Service
+
+	dcmds []*daemon.DaemonCmd
 }
 
-func NewConsul(addr string, node *Node, services []*Service) *Consul {
-  return &Consul{
-    ServerAddr:  addr,
-    Node:        node,
-    ServiceList: services,
-  }
+func NewConsul(addr string, node *Node, dcmds []*daemon.DaemonCmd) *Consul {
+	return &Consul{
+		ServerAddr: addr,
+		Node:       node,
+
+		dcmds: dcmds,
+	}
 }
 
 type Node struct {
-  Name    string
-  Address string
+	Name    string
+	Address string
 }
 
 func NewNode(name, add string) *Node {
-  return &Node{
-    Name:    name,
-    Address: add,
-  }
+	return &Node{
+		Name:    name,
+		Address: add,
+	}
 }
 
 // consul service
 type Service struct {
-  Node    *Node
-  Name    string
-  Port    string
-  Address string // ip
+	Node    *Node
+	Name    string
+	Port    string
+	Address string // ip
 }
 
 func NewService(node *Node, name, port, addr string) *Service {
-  return &Service{
-    Node:    node,
-    Name:    name,
-    Port:    port,
-    Address: addr,
-  }
+	return &Service{
+		Node:    node,
+		Name:    name,
+		Port:    port,
+		Address: addr,
+	}
 }
 
 func (s *Service) Register() {
@@ -69,22 +73,22 @@ func (s *Service) Deregister() {
 }
 
 /*
-  {
-    "services": [
-      {
-        "name": "prometheus",
-        "port": 9090,
-        "address": "",
-        "checks": [
-          {
-            "name": "prometheusHealthy",
-            "http": "http://localhost:9090/-/healthy",
-            "interval": "30s"
-          }
-        ]
-      }
-    ]
-  }
+	{
+	  "services": [
+	    {
+	      "name": "prometheus",
+	      "port": 9090,
+	      "address": "",
+	      "checks": [
+	        {
+	          "name": "prometheusHealthy",
+	          "http": "http://localhost:9090/-/healthy",
+	          "interval": "30s"
+	        }
+	      ]
+	    }
+	  ]
+	}
 */
 var TmplStr = `
 {{$_len := len .}}
@@ -102,27 +106,27 @@ var TmplStr = `
 `
 
 func consulConf() {
-  services := []*Service{
-    {Name: "prometheus", Port: "9090", Address: "localhost"},
-    {Name: "grafana", Port: "3000", Address: "localhost"},
-    {Name: "alertmanager", Port: "9093", Address: "localhost"},
-    {Name: "node-exporter", Port: "9100", Address: "localhost"},
-    {Name: "cadvisor", Port: "8080", Address: "localhost"},
-    {Name: "consul", Port: "8500", Address: "localhost"},
-  }
+	services := []*Service{
+		{Name: "prometheus", Port: "9090", Address: "localhost"},
+		{Name: "grafana", Port: "3000", Address: "localhost"},
+		{Name: "alertmanager", Port: "9093", Address: "localhost"},
+		{Name: "node-exporter", Port: "9100", Address: "localhost"},
+		{Name: "cadvisor", Port: "8080", Address: "localhost"},
+		{Name: "consul", Port: "8500", Address: "localhost"},
+	}
 
-  sub := func(a, b int) int {
-    return a - b
-  }
+	sub := func(a, b int) int {
+		return a - b
+	}
 
-  tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
-  if err != nil {
-    panic(err)
-  }
+	tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
+	if err != nil {
+		panic(err)
+	}
 
-  err = tmpl.Execute(os.Stdout, services)
-  if err != nil {
-    panic(err)
-  }
+	err = tmpl.Execute(os.Stdout, services)
+	if err != nil {
+		panic(err)
+	}
 
 }

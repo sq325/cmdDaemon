@@ -24,10 +24,15 @@ func Test_consulConf(t *testing.T) {
 func TestMain(t *testing.T) {
 	// t.Log(os.Hostname())
 	// t.Log(net.InterfaceAddrs())
-	inters, _ := net.Interfaces()
-	for _, inter := range inters {
-		t.Log(inter)
+	intf, _ := net.InterfaceByName("en0")
+	addrs, _ := intf.Addrs()
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
+			t.Log(ipNet.IP.String())
+		}
 	}
+
 }
 
 func TestSplitHostPort(t *testing.T) {

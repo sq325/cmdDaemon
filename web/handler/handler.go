@@ -32,11 +32,11 @@ func NewHandler(logger *zap.SugaredLogger, d *daemon.Daemon) *Handler {
 
 // RegisterHandleFunc register all http hanler funcs
 func (h *Handler) RegisterHandleFunc() {
-	http.HandleFunc("/reload", h.Reload)       // reload child processes
-	http.HandleFunc("/restart", h.Restart)     // reload daemon process and child processes
-	http.HandleFunc("/list", h.ListPortAndCmd) // list all port and cmd
-	http.HandleFunc("/update", h.UpdateConfig) // update config file
-	http.HandleFunc("/stop", h.Stop)           // stop daemon process
+	http.HandleFunc("/reload", h.Reload)        // reload child processes
+	http.HandleFunc("/restart", h.Restart)      // reload daemon process and child processes
+	http.HandleFunc("/list", h.ListPortAndCmd)  // list all port and cmd
+	http.HandleFunc("/update", h.UpdateConfig)  // update config file
+	http.HandleFunc("/stop", h.Stop)            // stop daemon process
 	http.HandleFunc("/consulsvcs", h.ConsulSvc) // consul service config")
 }
 
