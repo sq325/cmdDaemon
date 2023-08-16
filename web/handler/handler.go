@@ -3,6 +3,7 @@ package handler
 import (
 	"cmdDaemon/daemon"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -36,7 +37,7 @@ func (h *Handler) RegisterHandleFunc() {
 	http.HandleFunc("/list", h.ListPortAndCmd) // list all port and cmd
 	http.HandleFunc("/update", h.UpdateConfig) // update config file
 	http.HandleFunc("/stop", h.Stop)           // stop daemon process
-	http.HandleFunc("/consulsvc", h.ConsulSvc) // consul service config")
+	http.HandleFunc("/consulsvcs", h.ConsulSvc) // consul service config")
 }
 
 // Listen start register handleFuncs and start a http server
@@ -140,17 +141,20 @@ func (h *Handler) ListPortAndCmd(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for addr, cmd := range addrCmd {
-		port := addr
+		var port string
 		url, err := url.Parse("http://" + addr)
 		if err != nil {
 			h.logger.Error("Parse addr ", addr, " err:", err)
-		} else {
-			if url == nil {
-				url = &url.URL{}
+			port, err = portFromAddr(addr)
+			if err != nil {
+				h.logger.Error("portFromAddr err:", err)
+				w.Write([]byte(addr + " " + cmd + "\n"))
+				continue
 			}
-			port = url.Port()
+			w.Write([]byte(port + " " + cmd + "\n"))
 		}
-		w.Write([]byte(port + " " + cmd + "\n"))
+		w.Write([]byte(url.Port() + " " + cmd + "\n"))
+
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("All " + strconv.Itoa(len(h.Daemon.DCmds)) + " List " + strconv.Itoa(len(addrCmd))))
@@ -187,6 +191,12 @@ func restart() {
 
 // Generate consul service config
 func (h *Handler) ConsulSvc(w http.ResponseWriter, req *http.Request) {
+	dcmds := h.Daemon.DCmds
+	if len(dcmds) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		w.Write([]byte("No services"))
+		return
+	}
 
 }
 
@@ -215,6 +225,7 @@ func GitPull() error {
 }
 
 // AddrCmdMap return a map of port and cmd
+// addr is raw lsof ip:port column
 func AddrCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
 	if len(dcmds) == 0 {
 		return nil, nil
@@ -239,6 +250,7 @@ func AddrCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
 	return addrCmd, nil
 }
 
+// pidAddr return a map of pid: addr(host:port)
 func pidAddr() (map[string]string, error) {
 	var spacePattern = regexp.MustCompile(`\s+`)
 
@@ -259,4 +271,12 @@ func pidAddr() (map[string]string, error) {
 	}
 	return pidAddr, nil
 
+}
+
+func portFromAddr(addr string) (string, error) {
+	_, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "", fmt.Errorf("SplitHostPort err: %w", err)
+	}
+	return port, nil
 }
