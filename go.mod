@@ -1,6 +1,6 @@
 module cmdDaemon
 
-go 1.19
+go 1.21
 
 require (
   github.com/sevlyar/go-daemon v0.1.6

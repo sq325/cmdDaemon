@@ -13,6 +13,7 @@
 package register
 
 import (
+	"errors"
 	"net"
 	"testing"
 )
@@ -25,4 +26,14 @@ func TestSplitHostPort(t *testing.T) {
 	host, port, _ := net.SplitHostPort("*:8080")
 	t.Log(port)
 	t.Log(host)
+}
+
+func Test_hostAdmIp(t *testing.T) {
+	intf, err := net.InterfaceByName("ent0") // bond0, eth0
+	if errors.Is(err, net.InvalidAddrError()) {
+		t.Log(err)
+		return
+	}
+	t.Log(intf.Name)
+
 }

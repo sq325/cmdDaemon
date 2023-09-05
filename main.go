@@ -3,15 +3,11 @@ package main
 import (
 	"cmdDaemon/config"
 	"cmdDaemon/daemon"
-	"cmdDaemon/register"
 	"cmdDaemon/web/handler"
 	"fmt"
 	"log"
-	"net"
-	"net/netip"
 	"os"
 	"os/signal"
-	"sort"
 	"sync"
 	"syscall"
 	"time"
@@ -44,6 +40,8 @@ var (
 	logger *zap.SugaredLogger
 
 	signCh = make(chan os.Signal)
+
+	ifaceList = []string{"bond0", "eth0", "eth1"}
 )
 
 func init() {
@@ -118,8 +116,6 @@ func main() {
 	// 初始化handler
 	handler := handler.NewHandler(logger, OnceDaemon.Daemon)
 	go handler.Listen(*port)
-
-	hostName, _ := os.Hostname()
 
 	// 捕捉信号
 	for {
@@ -262,40 +258,4 @@ func initLogger() {
 	core := zapcore.NewCore(encoder, writeSyncer, level)
 
 	logger = zap.New(core, zap.AddCaller()).Sugar() // AddCaller() 显示行号和文件名
-}
-
-func servicesRegister(addr string, node *register.Node, dcmds []*daemon.DaemonCmd) error {
-
-}
-
-func serviceDeregister(addr string, node *register.Node, dcmds []*daemon.DaemonCmd) error {
-
-}
-
-func hostAdmIp() string {
-	intf, _ := net.InterfaceByName("en0")
-	addrs, _ := intf.Addrs()
-	addrList := make([]netip.Addr, 0)
-	for _, addr := range addrs {
-		ipNet, ok := addr.(*net.IPNet)
-		if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
-			addr, ok := netip.AddrFromSlice(ipNet.IP)
-			if !ok {
-				fmt.Println("AddrFromSlice failed.")
-			}
-			addrList = append(addrList, addr)
-		}
-	}
-	if len(addrList) == 0 {
-		return ""
-	}
-	addrList = sortAddrList(addrList)
-	return addrList[0].String()
-}
-
-func sortAddrList(addrList []netip.Addr) []netip.Addr {
-	sort.Slice(addrList, func(i, j int) bool {
-		return addrList[i].Less(addrList[j])
-	})
-	return addrList
 }

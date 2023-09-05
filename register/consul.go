@@ -16,34 +16,64 @@ import (
 	"cmdDaemon/daemon"
 	"os"
 	"text/template"
+
+	"go.uber.org/zap"
 )
 
+// consul represents a consul agent instance
 type Consul struct {
-	ServerAddr  string
+	DC          string // datacenter, default: dc1
 	Node        *Node
 	ServiceList []*Service
 
 	dcmds []*daemon.DaemonCmd
+
+	logger *zap.SugaredLogger
 }
 
-func NewConsul(addr string, node *Node, dcmds []*daemon.DaemonCmd) *Consul {
-	return &Consul{
-		ServerAddr: addr,
-		Node:       node,
-
-		dcmds: dcmds,
+func NewConsul(dc string, dcmds []*daemon.DaemonCmd, logger *zap.SugaredLogger) (*Consul, error) {
+	node, err := NewNode()
+	if err != nil {
+		return nil, err
 	}
+	return &Consul{
+		DC:     "dc1",
+		Node:   node,
+		dcmds:  dcmds,
+		logger: logger,
+	}, nil
 }
 
-type Node struct {
-	Name    string
-	Address string
-}
+// Only print consul config
+func (c *Consul) PrintConf() {
+	TmplStr := `
+	{{$_len := len .}}
+	{
+		services: [
+			{{range $index, $svc := .}}
+			{
+				"name": "{{$svc.Name}}",
+				"port": {{$svc.Port}},
+				"address": "{{$svc.Address}}"
+			}{{if lt $index (sub $_len 1)}},{{end}}
+			{{- end}}
+		]
+	}
+	`
 
-func NewNode(name, add string) *Node {
-	return &Node{
-		Name:    name,
-		Address: add,
+	services := c.ServiceList
+	sub := func(a, b int) int {
+		return a - b
+	}
+
+	tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
+	if err != nil {
+		panic(err)
+	}
+
+	err = tmpl.Execute(os.Stdout, services)
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -64,14 +94,6 @@ func NewService(node *Node, name, port, addr string) *Service {
 	}
 }
 
-func (s *Service) Register() {
-
-}
-
-func (s *Service) Deregister() {
-
-}
-
 /*
 	{
 	  "services": [
@@ -90,43 +112,29 @@ func (s *Service) Deregister() {
 	  ]
 	}
 */
-var TmplStr = `
-{{$_len := len .}}
-{
-  services: [
-    {{range $index, $svc := .}}
-    {
-      "name": "{{$svc.Name}}",
-      "port": {{$svc.Port}},
-      "address": "{{$svc.Address}}"
-    }{{if lt $index (sub $_len 1)}},{{end}}
-    {{- end}}
-  ]
-}
-`
 
-func consulConf() {
-	services := []*Service{
-		{Name: "prometheus", Port: "9090", Address: "localhost"},
-		{Name: "grafana", Port: "3000", Address: "localhost"},
-		{Name: "alertmanager", Port: "9093", Address: "localhost"},
-		{Name: "node-exporter", Port: "9100", Address: "localhost"},
-		{Name: "cadvisor", Port: "8080", Address: "localhost"},
-		{Name: "consul", Port: "8500", Address: "localhost"},
-	}
+// func consulConf() {
+// 	services := []*Service{
+// 		{Name: "prometheus", Port: "9090", Address: "localhost"},
+// 		{Name: "grafana", Port: "3000", Address: "localhost"},
+// 		{Name: "alertmanager", Port: "9093", Address: "localhost"},
+// 		{Name: "node-exporter", Port: "9100", Address: "localhost"},
+// 		{Name: "cadvisor", Port: "8080", Address: "localhost"},
+// 		{Name: "consul", Port: "8500", Address: "localhost"},
+// 	}
 
-	sub := func(a, b int) int {
-		return a - b
-	}
+// 	sub := func(a, b int) int {
+// 		return a - b
+// 	}
 
-	tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
-	if err != nil {
-		panic(err)
-	}
+// 	tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	err = tmpl.Execute(os.Stdout, services)
-	if err != nil {
-		panic(err)
-	}
+// 	err = tmpl.Execute(os.Stdout, services)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-}
+// }
