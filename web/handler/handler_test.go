@@ -42,7 +42,3 @@ func TestPortCmdMap(t *testing.T) {
 		t.Log(i, len(lineSlice), lineSlice[len(lineSlice)-2])
 	}
 }
-
-func Test_pidAddr(t *testing.T) {
-	t.Log(pidAddr())
-}

@@ -23,3 +23,67 @@ make build # 编译
 ./cmdDaemon --config.createDefault # 生成默认配置文件。需手动添加要启动的cmd
 ./cmdDaemon # 运行
 ```
+
+## UML
+
+```mermaid
+classDiagram
+  class Daemon{
+    ctx context.Context
+    exitedCmdCh chan *DaemonCmd
+    DCmds       []*DaemonCmd
+    Logger *zap.SugaredLogger
+  }
+  class DaemonCmd{
+    mu  sync.Mutex
+    ctx context.Context
+    Cmd     *exec.Cmd
+    Limiter *Limiter
+    Status int
+    Err    error 
+  }
+  class Handler{
+    logger *zap.SugaredLogger
+    Daemon *daemon.Daemon
+  }
+  class Limiter{
+    mu sync.Mutex
+    ctx context.Context
+    Interval time.Duration
+    MaxTimes int
+    Times int
+    LastTime time.Time
+  }
+  class Service{
+    NodeName string
+	  Name     string 
+	  Port     int    
+	  IP       string 
+  }
+  class Node{
+    Name  string
+    AdmIp string
+  }
+  class Consul {
+    DC          string
+    Node        *Node
+    ServiceList []*Service
+    dcmds []*daemon.DaemonCmd
+    logger *zap.SugaredLogger
+
+
+  }
+  class IRegister {
+    <<interface>>
+    Register() error
+	  Deregister() error
+  }
+
+  Consul ..|> IRegister
+  Consul o--> Node
+  Consul o--> Service
+  Consul o--> DaemonCmd
+  DaemonCmd o--> Limiter
+  Daemon o--> DaemonCmd
+  Handler o--> Daemon
+```

@@ -3,6 +3,7 @@ package main
 import (
 	"cmdDaemon/config"
 	"cmdDaemon/daemon"
+	"cmdDaemon/register"
 	"cmdDaemon/web/handler"
 	"fmt"
 	"log"
@@ -30,9 +31,10 @@ var (
 	configFile     *string = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
 	version        *bool   = pflag.BoolP("version", "v", false, "Print version information.")
 	port           *string = pflag.String("web.port", "9090", "Port to listen.")
-	consul         *string = pflag.String("consul", "", "Consul address. e.g. localhost:8500")
+	consulAddr     *string = pflag.String("consulAddr", "", "Consul address. e.g. localhost:8500")
 
-	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
+	printCmd        *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
+	printConsulConf *bool = pflag.Bool("printConsulConf", false, "Print consul config.")
 )
 
 var (
@@ -40,8 +42,6 @@ var (
 	logger *zap.SugaredLogger
 
 	signCh = make(chan os.Signal)
-
-	ifaceList = []string{"bond0", "eth0", "eth1"}
 )
 
 func init() {
@@ -111,89 +111,101 @@ func main() {
 	OnceDaemon.Do(func() {
 		OnceDaemon.Daemon = daemon.NewDaemon(ctx, cmds, logger)
 	})
-	go OnceDaemon.Daemon.Run()
+
+	// print consul conf
+	if *printConsulConf {
+		node, err := register.NewNode()
+		if err != nil {
+			fmt.Printf("New node failed. %v", err)
+		}
+		consul, err := register.NewConsul(*consulAddr, "dc1", node, OnceDaemon.Daemon.DCmds, logger)
+		if err != nil {
+			fmt.Printf("New consul failed. %v", err)
+		}
+		consul.PrintConf()
+		return
+	}
+
+	go OnceDaemon.Daemon.Run() // run cmds
 
 	// 初始化handler
 	handler := handler.NewHandler(logger, OnceDaemon.Daemon)
-	go handler.Listen(*port)
+	go handler.Listen(*port) // listen manager web port
 
 	// 捕捉信号
-	for {
-		select {
-		case sig := <-signCh:
-			switch sig {
-			case syscall.SIGHUP:
-				// 重新加载配置文件, recover initConf panic
-				var initConfPanic bool
-				func() {
-					defer func() {
-						if r := recover(); r != nil {
-							logger.Errorf("Reload config failed. %v", r)
-							logger.Infoln("Panic Recover. Nothing changed.")
-							initConfPanic = true
-						}
-					}()
-					initConf()
+	for sig := range signCh {
+		switch sig {
+		case syscall.SIGHUP:
+			// 重新加载配置文件, recover initConf panic
+			var initConfPanic bool
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						logger.Errorf("Reload config failed. %v", r)
+						logger.Infoln("Panic Recover. Nothing changed.")
+						initConfPanic = true
+					}
 				}()
-				if initConfPanic { // if initConf panic, do not reload
-					break
-				}
-
-				logger.Infoln("Reloaded config.")
-				cmds := config.GenerateCmds(conf)
-				if len(cmds) == 0 {
-					logger.Error("No cmd to run. Do not reload.")
-					break
-				}
-				// 关闭所有子进程
-				cancel()
-				var wg sync.WaitGroup
-				for _, dcmd := range OnceDaemon.Daemon.DCmds {
-					dcmd := dcmd // capture range variable
-					if dcmd.Status == daemon.Exited {
-						continue
-					}
-					pid := dcmd.Cmd.Process.Pid
-					err := syscall.Kill(pid, syscall.SIGTERM)
-					if err != nil {
-						logger.Errorf("Cmd: %s Pid: %d kill failed. %v", dcmd.Cmd.String(), pid, err)
-					}
-
-					// wait for child process exited
-					// if not exited, kill it after 10s
-					wg.Add(1)
-					go func() {
-						defer wg.Done()
-						// wait for child process exited
-						if dcmd.Cmd == nil || dcmd.Cmd.ProcessState == nil {
-							return
-						}
-						isExited := dcmd.Cmd.ProcessState.Exited()
-						ch := make(chan struct{}, 1)
-						if isExited {
-							ch <- struct{}{}
-						}
-						select {
-						case <-ch:
-						case <-time.After(10 * time.Second):
-							dcmd.Cmd.Process.Kill()
-						}
-					}()
-				}
-				wg.Wait()
-				logger.Infoln("Ctx canceled. All child processes killed.")
-
-				// reload Daemon and run new cmds
-				ctx, cancel = context.WithCancel(context.Background())
-				OnceDaemon.Daemon.Reload(ctx, cmds)
-				go OnceDaemon.Daemon.Run()
-				logger.Infoln("Restart completely.")
-
-			// kill all child processes
-			case syscall.SIGTERM:
-				logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
-				return // defer 会kill所有子进程
+				initConf()
+			}()
+			if initConfPanic { // if initConf panic, do not reload
+				break
 			}
+
+			logger.Infoln("Reloaded config.")
+			cmds := config.GenerateCmds(conf)
+			if len(cmds) == 0 {
+				logger.Error("No cmd to run. Do not reload.")
+				break
+			}
+			// 关闭所有子进程
+			cancel()
+			var wg sync.WaitGroup
+			for _, dcmd := range OnceDaemon.Daemon.DCmds {
+				dcmd := dcmd // capture range variable
+				if dcmd.Status == daemon.Exited {
+					continue
+				}
+				pid := dcmd.Cmd.Process.Pid
+				err := syscall.Kill(pid, syscall.SIGTERM)
+				if err != nil {
+					logger.Errorf("Cmd: %s Pid: %d kill failed. %v", dcmd.Cmd.String(), pid, err)
+				}
+
+				// wait for child process exited
+				// if not exited, kill it after 10s
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					// wait for child process exited
+					if dcmd.Cmd == nil || dcmd.Cmd.ProcessState == nil {
+						return
+					}
+					isExited := dcmd.Cmd.ProcessState.Exited()
+					ch := make(chan struct{}, 1)
+					if isExited {
+						ch <- struct{}{}
+					}
+					select {
+					case <-ch:
+					case <-time.After(10 * time.Second):
+						dcmd.Cmd.Process.Kill()
+					}
+				}()
+			}
+			wg.Wait()
+			logger.Infoln("Ctx canceled. All child processes killed.")
+
+			// reload Daemon and run new cmds
+			ctx, cancel = context.WithCancel(context.Background())
+			OnceDaemon.Daemon.Reload(ctx, cmds)
+			go OnceDaemon.Daemon.Run()
+			logger.Infoln("Restart completely.")
+
+		// kill all child processes
+		case syscall.SIGTERM:
+			logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
+			return // defer 会kill所有子进程
 		}
 	}
 }

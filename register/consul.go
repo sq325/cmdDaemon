@@ -14,34 +14,72 @@ package register
 
 import (
 	"cmdDaemon/daemon"
+	"cmdDaemon/internal/tool"
+	"net/url"
 	"os"
+	"strconv"
+	"strings"
 	"text/template"
 
 	"go.uber.org/zap"
 )
 
+type IRegiser interface {
+	Register() error
+	Deregister() error
+}
+
 // consul represents a consul agent instance
+// Consul implements IRegiser
 type Consul struct {
+	URL *url.URL // http://localhost:8500
+
 	DC          string // datacenter, default: dc1
 	Node        *Node
 	ServiceList []*Service
 
-	dcmds []*daemon.DaemonCmd
+	dcmds []*daemon.DaemonCmd // must runned dcmds
 
 	logger *zap.SugaredLogger
 }
 
-func NewConsul(dc string, dcmds []*daemon.DaemonCmd, logger *zap.SugaredLogger) (*Consul, error) {
-	node, err := NewNode()
+// providers
+func NewConsul(Consuladdr, dc string, node *Node, dcmds []*daemon.DaemonCmd, logger *zap.SugaredLogger) (*Consul, error) {
+	serviceList := make([]*Service, 0, len(dcmds))
+	url, err := url.Parse("http://" + Consuladdr)
 	if err != nil {
 		return nil, err
 	}
+
+	for _, dcmd := range dcmds {
+		if dcmd.Status != 1 {
+			continue
+		}
+		pidaddr, err := tool.PidAddr()
+		if err != nil {
+			return nil, err
+		}
+
+		port := parsePort(pidaddr[strconv.Itoa(dcmd.Cmd.Process.Pid)])
+		svc, err := NewService(node.Name, dcmd.Cmd.Args[0], node.AdmIp, port)
+		if err != nil {
+			return nil, err
+		}
+		serviceList = append(serviceList, svc)
+	}
+
 	return &Consul{
-		DC:     "dc1",
-		Node:   node,
-		dcmds:  dcmds,
-		logger: logger,
+		URL:         url,
+		DC:          "dc1",
+		Node:        node,
+		ServiceList: serviceList,
+		dcmds:       dcmds,
+		logger:      logger,
 	}, nil
+}
+
+func parsePort(addr string) string {
+	return addr[strings.LastIndex(addr, ":")+1:]
 }
 
 // Only print consul config
@@ -76,65 +114,3 @@ func (c *Consul) PrintConf() {
 		panic(err)
 	}
 }
-
-// consul service
-type Service struct {
-	Node    *Node
-	Name    string
-	Port    string
-	Address string // ip
-}
-
-func NewService(node *Node, name, port, addr string) *Service {
-	return &Service{
-		Node:    node,
-		Name:    name,
-		Port:    port,
-		Address: addr,
-	}
-}
-
-/*
-	{
-	  "services": [
-	    {
-	      "name": "prometheus",
-	      "port": 9090,
-	      "address": "",
-	      "checks": [
-	        {
-	          "name": "prometheusHealthy",
-	          "http": "http://localhost:9090/-/healthy",
-	          "interval": "30s"
-	        }
-	      ]
-	    }
-	  ]
-	}
-*/
-
-// func consulConf() {
-// 	services := []*Service{
-// 		{Name: "prometheus", Port: "9090", Address: "localhost"},
-// 		{Name: "grafana", Port: "3000", Address: "localhost"},
-// 		{Name: "alertmanager", Port: "9093", Address: "localhost"},
-// 		{Name: "node-exporter", Port: "9100", Address: "localhost"},
-// 		{Name: "cadvisor", Port: "8080", Address: "localhost"},
-// 		{Name: "consul", Port: "8500", Address: "localhost"},
-// 	}
-
-// 	sub := func(a, b int) int {
-// 		return a - b
-// 	}
-
-// 	tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	err = tmpl.Execute(os.Stdout, services)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// }

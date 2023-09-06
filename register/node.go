@@ -33,6 +33,7 @@ type Node struct {
 	AdmIp string // adm ip
 }
 
+// provider
 func NewNode() (*Node, error) {
 	hostName, _ := os.Hostname()
 	admIp, err := hostAdmIp(intfList)
