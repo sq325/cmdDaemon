@@ -70,3 +70,8 @@ func PidAddr() (map[string]string, error) {
 	}
 	return pidAddr, nil
 }
+
+
+func Parseport(addr string) string {
+	return addr[strings.LastIndex(addr, ":")+1:]
+}

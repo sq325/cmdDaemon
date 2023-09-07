@@ -82,7 +82,7 @@ classDiagram
   Consul ..|> IRegister
   Consul o--> Node
   Consul o--> Service
-  Consul o--> DaemonCmd
+  Consul o--> Daemon
   DaemonCmd o--> Limiter
   Daemon o--> DaemonCmd
   Handler o--> Daemon

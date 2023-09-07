@@ -145,7 +145,13 @@ func (d *Daemon) resetLimiter() {
 // Reload reload all dcmds and ctx
 func (d *Daemon) Reload(ctx context.Context, cmds []*exec.Cmd) {
 	d.DCmds = make([]*DaemonCmd, 0, len(cmds))
+	// drain channel
 	close(d.exitedCmdCh)
+	if d.exitedCmdCh != nil {
+		for range d.exitedCmdCh {
+		}
+	}
+
 	d.exitedCmdCh = make(chan *DaemonCmd, 20)
 	d.ctx = ctx
 	for _, cmd := range cmds {
@@ -169,6 +175,16 @@ func (d *Daemon) GetExitedCmdLen() int {
 	var count int
 	for _, dcmd := range d.DCmds {
 		if dcmd.Status == Exited {
+			count++
+		}
+	}
+	return count
+}
+
+func (d *Daemon) GetRunningCmdLen() int {
+	var count int
+	for _, dcmd := range d.DCmds {
+		if dcmd.Status == Running {
 			count++
 		}
 	}

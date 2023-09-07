@@ -21,8 +21,9 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"strings"
+	"sync"
 	"text/template"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -78,8 +79,10 @@ func NewServiceList(node *Node, daemon *daemon.Daemon) ([]*Service, error) {
 			return nil, fmt.Errorf("PidAddr err: %w", err)
 		}
 
-		port := parsePort(pidaddr[strconv.Itoa(dcmd.Cmd.Process.Pid)])
-		svc, err := newService(node.Name, dcmd.Cmd.Args[0], node.AdmIp, port)
+		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
+		port := tool.Parseport(pidaddr[pid])
+
+		svc, err := newService(node.Name, svcName(dcmd.Cmd.Args[0], port, pid), node.AdmIp, port) // 防止svc重名-> name:port or name@pid
 		if err != nil {
 			return nil, fmt.Errorf("NewService err: %w", err)
 		}
@@ -143,18 +146,66 @@ func (c *Consul) Deregister() error {
 	return errs
 }
 
-// 更新serviceList
-func (c *Consul) updateSvcList() {
-	svcList, err := NewServiceList(c.Node, c.Daemon)
-	if err != nil {
-		c.logger.Errorln("NewServiceList err: ", err)
-		return
-	}
-	c.ServiceList = svcList
+// Watch watch daemon.Dcmds status change and update serviceList
+func (c *Consul) Watch() {
+	var wg sync.WaitGroup
+
+	// 判断runningCount和exitedCount的数量是否有变化
+	ticker1m := time.NewTicker(1 * time.Minute)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		runningCount := c.Daemon.GetRunningCmdLen()
+		exitedCount := c.Daemon.GetExitedCmdLen()
+		for range ticker1m.C {
+			if runningCount != c.Daemon.GetRunningCmdLen() || exitedCount != c.Daemon.GetExitedCmdLen() {
+				if err := c.RegisterAgain(); err != nil {
+					c.logger.Errorln("RegisterAgain err: ", err)
+					continue
+				}
+				runningCount = c.Daemon.GetRunningCmdLen()
+				exitedCount = c.Daemon.GetExitedCmdLen()
+			}
+		}
+	}()
+
+	// 15mins 重新register一次
+	ticker15m := time.NewTicker(15 * time.Minute)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for range ticker15m.C {
+			if err := c.RegisterAgain(); err != nil {
+				c.logger.Errorln("RegisterAgain err: ", err)
+				continue
+			}
+		}
+	}()
+
+	wg.Wait()
 }
 
-func parsePort(addr string) string {
-	return addr[strings.LastIndex(addr, ":")+1:]
+func (c *Consul) RegisterAgain() error {
+	if err := c.updateSvcList(); err != nil {
+		return err
+	}
+	if err := c.Deregister(); err != nil {
+		return err
+	}
+	if err := c.Register(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// 更新serviceList
+func (c *Consul) updateSvcList() error {
+	svcList, err := NewServiceList(c.Node, c.Daemon)
+	if err != nil {
+		return err
+	}
+	c.ServiceList = svcList
+	return nil
 }
 
 // Only print consul config
@@ -188,4 +239,11 @@ func (c *Consul) PrintConf() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func svcName(name, port, pid string) string {
+	if port != "" {
+		return name + ":" + port
+	}
+	return name + "@" + pid
 }

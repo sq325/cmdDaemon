@@ -3,6 +3,7 @@ package main
 import (
 	"cmdDaemon/config"
 	"cmdDaemon/daemon"
+	"cmdDaemon/register"
 	"cmdDaemon/web/handler"
 	"fmt"
 	"log"
@@ -32,15 +33,14 @@ var (
 	port           *string = pflag.String("web.port", "9090", "Port to listen.")
 	consulAddr     *string = pflag.String("consulAddr", "", "Consul address. e.g. localhost:8500")
 
-	printCmd        *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
-	printConsulConf *bool = pflag.Bool("printConsulConf", false, "Print consul config.")
+	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
+	// printConsulConf *bool = pflag.Bool("printConsulConf", false, "Print consul config.")
 )
 
 var (
 	conf *config.Conf
 
-	signCh      = make(chan os.Signal)
-	cmdChangeCh = make(chan struct{}, 20)
+	signCh = make(chan os.Signal)
 )
 
 func init() {
@@ -59,7 +59,7 @@ func main() {
 	}
 	if *printCmd {
 		initConf()
-		cmds := config.GenerateCmds(conf)
+		cmds := createCmds(conf)
 		for _, cmd := range cmds {
 			fmt.Println(cmd.String())
 		}
@@ -80,8 +80,8 @@ func main() {
 	fmt.Printf("Daemon started %s\n", time.Now().Format(time.DateTime))
 
 	initConf()
-	logger := NewLogger()
-	cmds := config.GenerateCmds(conf)
+	logger := createLogger()
+	cmds := createCmds(conf)
 	if len(cmds) == 0 {
 		logger.Fatalln("No cmd to run. Daemon existed.")
 		return
@@ -90,28 +90,40 @@ func main() {
 	signal.Notify(signCh, syscall.SIGHUP, syscall.SIGTERM)
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// 初始化Daemon
+	onceDaemon := sync.OnceValue(func() *daemon.Daemon {
+		return createDaemon(ctx, cmds, logger)
+	})
+	d := onceDaemon()
+	go d.Run() // run cmds
+
+	// 初始化consul
+	onceConsul := sync.OnceValues(func() (*register.Consul, error) {
+		return createConsul(*consulAddr, d, logger)
+	})
+	consul, err := onceConsul()
+	if err != nil {
+		logger.Errorln("Create consul failed. ", err)
+	}
+	go func() { // 启watch
+		<-time.After(10 * time.Second) // 等待daemon启动所有cmd
+		if consul != nil {
+			consul.Watch()
+		}
+	}()
+
+	// 初始化handler
+	handler := handler.NewHandler(logger, d)
+	go handler.Listen(*port) // listen manager web port
+
 	// 防止子进程成为僵尸进程
 	defer func() {
 		pid := os.Getpid()
 		cancel()
 		syscall.Kill(-pid, syscall.SIGTERM)
+		consul.Deregister()
 		time.Sleep(5 * time.Second)
 	}()
-
-	// 初始化Daemon, 单例
-	OnceDaemon := struct {
-		sync.Once
-		Daemon *daemon.Daemon
-	}{}
-	OnceDaemon.Do(func() {
-		OnceDaemon.Daemon = daemon.NewDaemon(ctx, cmds, logger)
-	})
-
-	go OnceDaemon.Daemon.Run() // run cmds
-
-	// 初始化handler
-	handler := handler.NewHandler(logger, OnceDaemon.Daemon)
-	go handler.Listen(*port) // listen manager web port
 
 	// 捕捉信号
 	for sig := range signCh {
@@ -143,7 +155,7 @@ func main() {
 			// 关闭所有子进程
 			cancel()
 			var wg sync.WaitGroup
-			for _, dcmd := range OnceDaemon.Daemon.DCmds {
+			for _, dcmd := range d.DCmds {
 				dcmd := dcmd // capture range variable
 				if dcmd.Status == daemon.Exited {
 					continue
@@ -180,9 +192,18 @@ func main() {
 
 			// reload Daemon and run new cmds
 			ctx, cancel = context.WithCancel(context.Background())
-			OnceDaemon.Daemon.Reload(ctx, cmds)
-			go OnceDaemon.Daemon.Run()
-			logger.Infoln("Restart completely.")
+			d.Reload(ctx, cmds)
+			go d.Run()
+
+			// register again
+			func() {
+				<-time.After(10 * time.Second)
+				if err := consul.RegisterAgain(); err != nil {
+					logger.Errorln("Register again failed. err:", err)
+				}
+				logger.Infoln("Register again successfully.")
+				logger.Infoln("Restart completely.")
+			}()
 
 		// kill all child processes
 		case syscall.SIGTERM:

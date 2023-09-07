@@ -11,6 +11,9 @@ import (
 	"cmdDaemon/daemon"
 	"cmdDaemon/register"
 	"context"
+	"errors"
+	"os/exec"
+
 	"github.com/google/wire"
 	"go.uber.org/zap"
 )
@@ -18,14 +21,25 @@ import (
 // Injectors from wire.go:
 
 // injector
-func createDaemon(ctx context.Context, conf2 *config.Conf) (*daemon.Daemon, error) {
-	v := config.GenerateCmds(conf2)
+func createLogger() *zap.SugaredLogger {
 	sugaredLogger := NewLogger()
-	daemonDaemon := daemon.NewDaemon(ctx, v, sugaredLogger)
-	return daemonDaemon, nil
+	return sugaredLogger
+}
+
+func createCmds(conf2 *config.Conf) []*exec.Cmd {
+	v := config.GenerateCmds(conf2)
+	return v
+}
+
+func createDaemon(ctx context.Context, cmds []*exec.Cmd, logger *zap.SugaredLogger) *daemon.Daemon {
+	daemonDaemon := daemon.NewDaemon(ctx, cmds, logger)
+	return daemonDaemon
 }
 
 func createConsul(Consuladdr string, daemon2 *daemon.Daemon, logger *zap.SugaredLogger) (*register.Consul, error) {
+	if Consuladdr == "" {
+		return nil, errors.New("found no consul address")
+	}
 	node, err := register.NewNode()
 	if err != nil {
 		return nil, err
@@ -45,6 +59,6 @@ func createConsul(Consuladdr string, daemon2 *daemon.Daemon, logger *zap.Sugared
 
 // provider
 var (
-	DaemonSet = wire.NewSet(daemon.NewDaemon, daemon.NewLimiter, daemon.NewDaemonCmd, NewLogger, config.GenerateCmds)
+	DaemonSet = wire.NewSet(daemon.NewDaemon, daemon.NewLimiter, daemon.NewDaemonCmd)
 	ConsulSet = wire.NewSet(register.NewConsul, register.NewServiceList, register.NewNode)
 )

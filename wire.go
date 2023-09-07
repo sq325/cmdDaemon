@@ -22,6 +22,7 @@ import (
 	"cmdDaemon/daemon"
 	"cmdDaemon/register"
 	"context"
+	"os/exec"
 
 	"github.com/google/wire"
 	"go.uber.org/zap"
@@ -33,8 +34,6 @@ var (
 		daemon.NewDaemon,
 		daemon.NewLimiter,
 		daemon.NewDaemonCmd,
-		NewLogger,
-		config.GenerateCmds,
 	)
 	ConsulSet = wire.NewSet(
 		register.NewConsul,
@@ -44,9 +43,16 @@ var (
 )
 
 // injector
-func createDaemon(ctx context.Context, conf *config.Conf) (*daemon.Daemon, error) {
-	wire.Build(DaemonSet)
-	return nil, nil
+func createLogger() *zap.SugaredLogger {
+	panic(wire.Build(NewLogger))
+}
+
+func createCmds(conf *config.Conf) []*exec.Cmd {
+	panic(wire.Build(config.GenerateCmds))
+}
+
+func createDaemon(ctx context.Context, cmds []*exec.Cmd, logger *zap.SugaredLogger) *daemon.Daemon {
+	panic(wire.Build(DaemonSet))
 }
 
 func createConsul(Consuladdr string, daemon *daemon.Daemon, logger *zap.SugaredLogger) (*register.Consul, error) {
