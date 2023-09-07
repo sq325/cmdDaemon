@@ -15,6 +15,9 @@ package register
 import (
 	"cmdDaemon/daemon"
 	"cmdDaemon/internal/tool"
+	"errors"
+	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -32,50 +35,122 @@ type IRegiser interface {
 // consul represents a consul agent instance
 // Consul implements IRegiser
 type Consul struct {
-	URL *url.URL // http://localhost:8500
+	URL    *url.URL // http://localhost:8500
+	client *http.Client
 
 	DC          string // datacenter, default: dc1
 	Node        *Node
 	ServiceList []*Service
 
-	dcmds []*daemon.DaemonCmd // must runned dcmds
+	Daemon *daemon.Daemon
 
 	logger *zap.SugaredLogger
 }
 
 // providers
-func NewConsul(Consuladdr, dc string, node *Node, dcmds []*daemon.DaemonCmd, logger *zap.SugaredLogger) (*Consul, error) {
-	serviceList := make([]*Service, 0, len(dcmds))
+func NewConsul(Consuladdr string, node *Node, daemon *daemon.Daemon, svcList []*Service, logger *zap.SugaredLogger) (*Consul, error) {
 	url, err := url.Parse("http://" + Consuladdr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("url.Parse err: %w", err)
 	}
 
+	return &Consul{
+		URL:         url,
+		client:      &http.Client{},
+		DC:          "dc1",
+		Node:        node,
+		ServiceList: svcList,
+		Daemon:      daemon,
+		logger:      logger,
+	}, nil
+}
+
+func NewServiceList(node *Node, daemon *daemon.Daemon) ([]*Service, error) {
+	dcmds := daemon.DCmds
+	serviceList := make([]*Service, 0, len(dcmds))
 	for _, dcmd := range dcmds {
+		// 忽略已经退出的cmd
 		if dcmd.Status != 1 {
 			continue
 		}
 		pidaddr, err := tool.PidAddr()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("PidAddr err: %w", err)
 		}
 
 		port := parsePort(pidaddr[strconv.Itoa(dcmd.Cmd.Process.Pid)])
-		svc, err := NewService(node.Name, dcmd.Cmd.Args[0], node.AdmIp, port)
+		svc, err := newService(node.Name, dcmd.Cmd.Args[0], node.AdmIp, port)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("NewService err: %w", err)
 		}
 		serviceList = append(serviceList, svc)
 	}
+	return serviceList, nil
+}
 
-	return &Consul{
-		URL:         url,
-		DC:          "dc1",
-		Node:        node,
-		ServiceList: serviceList,
-		dcmds:       dcmds,
-		logger:      logger,
-	}, nil
+func (c *Consul) Register() error {
+	registerPath := "/v1/catalog/register"
+	var errs error
+
+	// 注册所有services
+	for _, svc := range c.ServiceList {
+		reader, err := svc.ReqBody()
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
+		req, err := http.NewRequest("PUT", c.URL.JoinPath(registerPath).String(), reader)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		defer req.Body.Close()
+		resp, err := c.client.Do(req)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			errs = errors.Join(errs, errors.New("register failed with status code: "+strconv.Itoa(resp.StatusCode)))
+		}
+	}
+	return errs
+}
+
+func (c *Consul) Deregister() error {
+	deregisterPath := "/v1/catalog/deregister"
+	var errs error
+
+	// 注销所有services
+	for _, svc := range c.ServiceList {
+		reader, err := svc.ReqBody()
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
+		req, err := http.NewRequest("PUT", c.URL.JoinPath(deregisterPath).String(), reader)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		defer req.Body.Close()
+		resp, err := c.client.Do(req)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			errs = errors.Join(errs, errors.New("deregister failed with status code: "+strconv.Itoa(resp.StatusCode)))
+			c.logger.Errorln(resp.Body)
+		}
+	}
+	return errs
+}
+
+// 更新serviceList
+func (c *Consul) updateSvcList() {
+	svcList, err := NewServiceList(c.Node, c.Daemon)
+	if err != nil {
+		c.logger.Errorln("NewServiceList err: ", err)
+		return
+	}
+	c.ServiceList = svcList
 }
 
 func parsePort(addr string) string {

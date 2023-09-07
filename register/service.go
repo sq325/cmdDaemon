@@ -16,18 +16,18 @@ type Service struct {
 	IP       string // 本机ip
 }
 
-func NewService(nodeName, name, ip string, port any) (*Service, error) {
+func newService(nodeName, name, ip string, port any) (*Service, error) {
 	var err error
-	switch port.(type) {
+	switch p := port.(type) {
 	case int:
-		if port.(int) < 0 || port.(int) > 65535 {
+		if p < 0 || p > 65535 {
 			err = errors.New("port must between 0 and 65535")
 		}
 	case string:
-		if port.(string) == "" {
+		if p == "" {
 			err = errors.New("port must not be empty")
 		}
-		port, _ = strconv.Atoi(port.(string)) // transfer to int
+		port, _ = strconv.Atoi(p) // transfer to int
 	default:
 		err = errors.New("port must be int or string")
 	}

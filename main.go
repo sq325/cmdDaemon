@@ -3,7 +3,6 @@ package main
 import (
 	"cmdDaemon/config"
 	"cmdDaemon/daemon"
-	"cmdDaemon/register"
 	"cmdDaemon/web/handler"
 	"fmt"
 	"log"
@@ -22,7 +21,7 @@ import (
 )
 
 const (
-	_version = "v4.0 2023-08-16"
+	_version = "v4.0 2023-09-17"
 )
 
 // flags
@@ -38,10 +37,10 @@ var (
 )
 
 var (
-	conf   *config.Conf
-	logger *zap.SugaredLogger
+	conf *config.Conf
 
-	signCh = make(chan os.Signal)
+	signCh      = make(chan os.Signal)
+	cmdChangeCh = make(chan struct{}, 20)
 )
 
 func init() {
@@ -58,8 +57,6 @@ func main() {
 		fmt.Println(_version)
 		return
 	}
-
-	// print cmd
 	if *printCmd {
 		initConf()
 		cmds := config.GenerateCmds(conf)
@@ -69,7 +66,6 @@ func main() {
 		return
 	}
 
-	// 监听SIGHUP和SIGTERM信号
 	cntxt := newForkCtx()
 	child, err := cntxt.Reborn()
 	if err != nil {
@@ -84,7 +80,7 @@ func main() {
 	fmt.Printf("Daemon started %s\n", time.Now().Format(time.DateTime))
 
 	initConf()
-	initLogger()
+	logger := NewLogger()
 	cmds := config.GenerateCmds(conf)
 	if len(cmds) == 0 {
 		logger.Fatalln("No cmd to run. Daemon existed.")
@@ -95,7 +91,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// 防止子进程成为僵尸进程
-	// forbid zombie process
 	defer func() {
 		pid := os.Getpid()
 		cancel()
@@ -112,20 +107,6 @@ func main() {
 		OnceDaemon.Daemon = daemon.NewDaemon(ctx, cmds, logger)
 	})
 
-	// print consul conf
-	if *printConsulConf {
-		node, err := register.NewNode()
-		if err != nil {
-			fmt.Printf("New node failed. %v", err)
-		}
-		consul, err := register.NewConsul(*consulAddr, "dc1", node, OnceDaemon.Daemon.DCmds, logger)
-		if err != nil {
-			fmt.Printf("New consul failed. %v", err)
-		}
-		consul.PrintConf()
-		return
-	}
-
 	go OnceDaemon.Daemon.Run() // run cmds
 
 	// 初始化handler
@@ -135,8 +116,9 @@ func main() {
 	// 捕捉信号
 	for sig := range signCh {
 		switch sig {
+		// 重新加载配置文件
 		case syscall.SIGHUP:
-			// 重新加载配置文件, recover initConf panic
+			// recover initConf panic
 			var initConfPanic bool
 			func() {
 				defer func() {
@@ -257,7 +239,7 @@ func initConf() {
 }
 
 // 初始化日志实例
-func initLogger() {
+func NewLogger() *zap.SugaredLogger {
 	writer := os.Stdout
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder // 时间格式：2020-12-16T17:53:30.466+0800
@@ -269,5 +251,6 @@ func initLogger() {
 	var level = zap.DebugLevel
 	core := zapcore.NewCore(encoder, writeSyncer, level)
 
-	logger = zap.New(core, zap.AddCaller()).Sugar() // AddCaller() 显示行号和文件名
+	logger := zap.New(core, zap.AddCaller()).Sugar() // AddCaller() 显示行号和文件名
+	return logger
 }

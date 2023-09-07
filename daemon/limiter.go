@@ -17,7 +17,7 @@ type Limiter struct {
 
 }
 
-func newLimiter() *Limiter {
+func NewLimiter() *Limiter {
 	location, _ := time.LoadLocation("Asia/Shanghai")
 	return &Limiter{
 		limit:    5,

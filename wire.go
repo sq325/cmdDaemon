@@ -12,6 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build wireinject
+// +build wireinject
+
 package main
 
+import (
+	"cmdDaemon/config"
+	"cmdDaemon/daemon"
+	"cmdDaemon/register"
+	"context"
 
+	"github.com/google/wire"
+	"go.uber.org/zap"
+)
+
+// provider
+var (
+	DaemonSet = wire.NewSet(
+		daemon.NewDaemon,
+		daemon.NewLimiter,
+		daemon.NewDaemonCmd,
+		NewLogger,
+		config.GenerateCmds,
+	)
+	ConsulSet = wire.NewSet(
+		register.NewConsul,
+		register.NewServiceList,
+		register.NewNode,
+	)
+)
+
+// injector
+func createDaemon(ctx context.Context, conf *config.Conf) (*daemon.Daemon, error) {
+	wire.Build(DaemonSet)
+	return nil, nil
+}
+
+func createConsul(Consuladdr string, daemon *daemon.Daemon, logger *zap.SugaredLogger) (*register.Consul, error) {
+	wire.Build(ConsulSet)
+	return nil, nil
+}

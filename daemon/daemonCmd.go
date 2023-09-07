@@ -19,11 +19,11 @@ type DaemonCmd struct {
 	Err    error // 退出原因
 }
 
-func newDaemonCmd(ctx context.Context, cmd *exec.Cmd) *DaemonCmd {
+func NewDaemonCmd(ctx context.Context, cmd *exec.Cmd) *DaemonCmd {
 	return &DaemonCmd{
 		ctx:     ctx,
 		Cmd:     cmd,
-		Limiter: newLimiter(),
+		Limiter: NewLimiter(),
 	}
 }
 
@@ -63,7 +63,7 @@ func (dcmd *DaemonCmd) startAndWait(ch chan<- *DaemonCmd) {
 	dcmd.Status = Exited
 	// 防止ch已经close，send导致panic
 	select {
-	case <-dcmd.ctx.Done():
+	case <-dcmd.ctx.Done(): // cancel
 		return
 	default:
 		ch <- dcmd
