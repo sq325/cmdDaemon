@@ -37,6 +37,8 @@ var (
 	logLevel         *string   = pflag.String("log.level", "info", "Log level. e.g. debug, info, warn, error, dpanic, panic, fatal")
 
 	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
+
+	killcmds *bool = pflag.Bool("kill", false, "Kill all child processes from config.")
 	// printConsulConf *bool = pflag.Bool("printConsulConf", false, "Print consul config.")
 )
 
@@ -122,7 +124,8 @@ func main() {
 	time.Sleep(5 * time.Second) // wait for cmds running
 	var consul *register.Consul
 	logger.Infoln("Consuladdr: ", *consulAddr)
-	if *consulAddr != "" {
+	switch *consulAddr {
+	case "":
 		onceConsul := sync.OnceValues(func() (*register.Consul, error) {
 			return createConsul(*consulAddr, d, *consulIfList, logger)
 		})
@@ -130,9 +133,11 @@ func main() {
 		if err != nil {
 			logger.Errorln("Create consul failed. ", err)
 		}
-
-		logger.Infoln("Consul created.")
 		logger.Debugf("consul: %+v\n", consul)
+		if consul == nil {
+			break
+		}
+		logger.Infoln("Consul created.")
 		func() {
 			consul.Updatesvclist()
 			if err := consul.Register(); err != nil {

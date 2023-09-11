@@ -34,7 +34,7 @@ func NewNode(intfList []string) (*Node, error) {
 	hostName, _ := os.Hostname()
 	admIp, err := hostAdmIp(intfList)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("hostAdmIp err: %w; intfList: %+v", err, intfList)
 	}
 	return &Node{
 		Name:  hostName,
