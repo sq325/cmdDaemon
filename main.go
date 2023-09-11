@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	_version = "v4.0 2023-09-08"
+	_version = "v4.0 2023-09-11"
 )
 
 // flags
@@ -107,6 +107,13 @@ func main() {
 		return
 	}
 
+	// Clear potential zombie processes based on the configuration file
+	// only to be used when the daemon panics.
+	if *killcmds {
+		
+		return
+	}
+
 	// signal
 	signal.Notify(signCh, syscall.SIGHUP, syscall.SIGTERM)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -124,8 +131,8 @@ func main() {
 	time.Sleep(5 * time.Second) // wait for cmds running
 	var consul *register.Consul
 	logger.Infoln("Consuladdr: ", *consulAddr)
-	switch *consulAddr {
-	case "":
+	switch {
+	case *consulAddr != "":
 		onceConsul := sync.OnceValues(func() (*register.Consul, error) {
 			return createConsul(*consulAddr, d, *consulIfList, logger)
 		})

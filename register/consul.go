@@ -237,20 +237,18 @@ func (c *Consul) Updatesvclist() error {
 
 // Only print consul config
 func (c *Consul) PrintConf(out io.Writer) {
-	TmplStr := `
-	{{$_len := len .}}
-	{
-		services: [
-			{{range $index, $svc := .}}
-			{
-				"name": "{{$svc.Name}}",
-				"port": {{$svc.Port}},
-				"address": "{{$svc.Address}}"
-			}{{if lt $index (sub $_len 1)}},{{end}}
-			{{- end}}
-		]
-	}
-	`
+	TmplStr := `{{$_len := len .}}
+{
+	"services": [
+		{{range $index, $svc := .}}
+		{
+			"name": "{{$svc.Name}}",
+			"port": {{$svc.Port}},
+			"address": "{{$svc.IP}}"
+		}{{if lt $index (sub $_len 1)}},{{end}}
+		{{- end}}
+	]
+}`
 
 	services := c.ServiceList
 	sub := func(a, b int) int {

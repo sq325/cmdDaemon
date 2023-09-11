@@ -91,28 +91,3 @@ func (svc *Service) ReqBody() ([]byte, error) {
 	}
 */
 
-// func consulConf() {
-// 	services := []*Service{
-// 		{Name: "prometheus", Port: "9090", Address: "localhost"},
-// 		{Name: "grafana", Port: "3000", Address: "localhost"},
-// 		{Name: "alertmanager", Port: "9093", Address: "localhost"},
-// 		{Name: "node-exporter", Port: "9100", Address: "localhost"},
-// 		{Name: "cadvisor", Port: "8080", Address: "localhost"},
-// 		{Name: "consul", Port: "8500", Address: "localhost"},
-// 	}
-
-// 	sub := func(a, b int) int {
-// 		return a - b
-// 	}
-
-// 	tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	err = tmpl.Execute(os.Stdout, services)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// }

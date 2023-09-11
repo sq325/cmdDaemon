@@ -17,8 +17,10 @@ import (
 	"context"
 	"net"
 	"net/url"
+	"os"
 	"os/exec"
 	"testing"
+	"text/template"
 )
 
 func TestSplitHostPort(t *testing.T) {
@@ -51,4 +53,48 @@ func TestNewServiceList(t *testing.T) {
 	_daemon := daemon.NewDaemon(ctx, cmds, nil)
 	NewServiceList(node, _daemon)
 
+}
+
+func TestConsul_PrintConf(t *testing.T) {
+	services := []*Service{
+		{Name: "prometheus", Port: "9090", IP: "localhost"},
+		{Name: "grafana", Port: "3000", IP: "localhost"},
+		{Name: "alertmanager", Port: "9093", IP: "localhost"},
+		{Name: "node-exporter", Port: "9100", IP: "localhost"},
+		{Name: "cadvisor", Port: "8080", IP: "localhost"},
+		{Name: "consul", Port: "8500", IP: "localhost"},
+	}
+	err := PrintConf(services)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func PrintConf(svcs []*Service) error {
+	TmplStr := `{{$_len := len .}}
+{
+	"services": [
+		{{range $index, $svc := .}}
+		{
+			"name": "{{$svc.Name}}",
+			"port": {{$svc.Port}},
+			"address": "{{$svc.IP}}"
+		}{{if lt $index (sub $_len 1)}},{{end}}
+		{{- end}}
+	]
+}`
+
+	out := os.Stdout
+	sub := func(a, b int) int {
+		return a - b
+	}
+	tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
+	if err != nil {
+		return err
+	}
+	err = tmpl.Execute(out, svcs)
+	if err != nil {
+		return err
+	}
+	return nil
 }
