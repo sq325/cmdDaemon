@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	_version = "v4.0 2023-09-17"
+	_version = "v4.0 2023-09-08"
 )
 
 // flags
@@ -32,6 +32,7 @@ var (
 	version        *bool   = pflag.BoolP("version", "v", false, "Print version information.")
 	port           *string = pflag.String("web.port", "9090", "Port to listen.")
 	consulAddr     *string = pflag.String("consulAddr", "", "Consul address. e.g. localhost:8500")
+	logLevel       *string = pflag.String("log.level", "info", "Log level. e.g. debug, info, warn, error, dpanic, panic, fatal")
 
 	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
 	// printConsulConf *bool = pflag.Bool("printConsulConf", false, "Print consul config.")
@@ -45,10 +46,10 @@ var (
 
 func init() {
 	pflag.Parse()
+	initConf()
 }
 
 func main() {
-
 	if *createConfFile {
 		createConfigFile()
 		return
@@ -58,7 +59,6 @@ func main() {
 		return
 	}
 	if *printCmd {
-		initConf()
 		cmds := createCmds(conf)
 		for _, cmd := range cmds {
 			fmt.Println(cmd.String())
@@ -79,14 +79,31 @@ func main() {
 	fmt.Println("- - - - - - - - - - - - - - -")
 	fmt.Printf("Daemon started %s\n", time.Now().Format(time.DateTime))
 
-	initConf()
-	logger := createLogger()
+	// 初始化日志
+	var logger *zap.SugaredLogger
+	switch *logLevel {
+	case "debug":
+		logger = createLogger(zapcore.DebugLevel)
+	case "info":
+		logger = createLogger(zapcore.InfoLevel)
+	case "warn":
+		logger = createLogger(zapcore.WarnLevel)
+	case "error":
+		logger = createLogger(zapcore.ErrorLevel)
+	default:
+		logger = createLogger(zapcore.InfoLevel)
+	}
+	logger.Debugln("port: ", *port)
+	logger.Debugln("consulAddr: ", *consulAddr)
+
+	// config
 	cmds := createCmds(conf)
 	if len(cmds) == 0 {
 		logger.Fatalln("No cmd to run. Daemon existed.")
 		return
 	}
 
+	// signal
 	signal.Notify(signCh, syscall.SIGHUP, syscall.SIGTERM)
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -95,22 +112,37 @@ func main() {
 		return createDaemon(ctx, cmds, logger)
 	})
 	d := onceDaemon()
+	logger.Infoln("Daemon created.")
+	logger.Debugf("daemon: %+v\n", d.DCmds)
 	go d.Run() // run cmds
 
 	// 初始化consul
-	onceConsul := sync.OnceValues(func() (*register.Consul, error) {
-		return createConsul(*consulAddr, d, logger)
-	})
-	consul, err := onceConsul()
-	if err != nil {
-		logger.Errorln("Create consul failed. ", err)
-	}
-	go func() { // 启watch
-		<-time.After(10 * time.Second) // 等待daemon启动所有cmd
-		if consul != nil {
-			consul.Watch()
+	time.Sleep(5 * time.Second) // wait for cmds running
+	var consul *register.Consul
+	logger.Infoln("Consuladdr: ", *consulAddr)
+	if *consulAddr != "" {
+		onceConsul := sync.OnceValues(func() (*register.Consul, error) {
+			return createConsul(*consulAddr, d, logger)
+		})
+		consul, err := onceConsul()
+		if err != nil {
+			logger.Errorln("Create consul failed. ", err)
 		}
-	}()
+
+		logger.Infoln("Consul created.")
+		logger.Debugf("consul: %+v\n", consul)
+		func() {
+			consul.Updatesvclist()
+			if err := consul.Register(); err != nil {
+				logger.Errorln("Register failed. ", err)
+			}
+			logger.Infoln("Register successfully.")
+		}()
+		go func() { // 启watch
+			time.Sleep(10 * time.Second)
+			consul.Watch()
+		}()
+	}
 
 	// 初始化handler
 	handler := handler.NewHandler(logger, d)
@@ -120,8 +152,10 @@ func main() {
 	defer func() {
 		pid := os.Getpid()
 		cancel()
+		if consul != nil {
+			consul.Deregister()
+		}
 		syscall.Kill(-pid, syscall.SIGTERM)
-		consul.Deregister()
 		time.Sleep(5 * time.Second)
 	}()
 
@@ -196,14 +230,14 @@ func main() {
 			go d.Run()
 
 			// register again
-			func() {
+			if consul != nil {
 				<-time.After(10 * time.Second)
 				if err := consul.RegisterAgain(); err != nil {
 					logger.Errorln("Register again failed. err:", err)
 				}
 				logger.Infoln("Register again successfully.")
 				logger.Infoln("Restart completely.")
-			}()
+			}
 
 		// kill all child processes
 		case syscall.SIGTERM:
@@ -215,7 +249,7 @@ func main() {
 
 // 守护进程上下文
 func newForkCtx() *fork.Context {
-	commandName := os.Args[0]
+	// commandName := os.Args[0]
 	return &fork.Context{
 		PidFileName: "daemon.pid",
 		PidFilePerm: 0644,
@@ -223,7 +257,7 @@ func newForkCtx() *fork.Context {
 		LogFilePerm: 0644,
 		WorkDir:     "./",
 		Umask:       027,
-		Args:        []string{commandName},
+		// Args:        []string{commandName},
 	}
 }
 
@@ -260,7 +294,7 @@ func initConf() {
 }
 
 // 初始化日志实例
-func NewLogger() *zap.SugaredLogger {
+func NewLogger(level zapcore.Level) *zap.SugaredLogger {
 	writer := os.Stdout
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder // 时间格式：2020-12-16T17:53:30.466+0800
@@ -269,7 +303,6 @@ func NewLogger() *zap.SugaredLogger {
 	encoder := zapcore.NewConsoleEncoder(encoderConfig)
 	writeSyncer := zapcore.AddSync(writer)
 
-	var level = zap.DebugLevel
 	core := zapcore.NewCore(encoder, writeSyncer, level)
 
 	logger := zap.New(core, zap.AddCaller()).Sugar() // AddCaller() 显示行号和文件名

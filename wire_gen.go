@@ -11,18 +11,17 @@ import (
 	"cmdDaemon/daemon"
 	"cmdDaemon/register"
 	"context"
-	"errors"
-	"os/exec"
-
 	"github.com/google/wire"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"os/exec"
 )
 
 // Injectors from wire.go:
 
 // injector
-func createLogger() *zap.SugaredLogger {
-	sugaredLogger := NewLogger()
+func createLogger(level zapcore.Level) *zap.SugaredLogger {
+	sugaredLogger := NewLogger(level)
 	return sugaredLogger
 }
 
@@ -37,9 +36,6 @@ func createDaemon(ctx context.Context, cmds []*exec.Cmd, logger *zap.SugaredLogg
 }
 
 func createConsul(Consuladdr string, daemon2 *daemon.Daemon, logger *zap.SugaredLogger) (*register.Consul, error) {
-	if Consuladdr == "" {
-		return nil, errors.New("found no consul address")
-	}
 	node, err := register.NewNode()
 	if err != nil {
 		return nil, err

@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"text/template"
@@ -50,6 +51,9 @@ type Consul struct {
 
 // providers
 func NewConsul(Consuladdr string, node *Node, daemon *daemon.Daemon, svcList []*Service, logger *zap.SugaredLogger) (*Consul, error) {
+	if Consuladdr == "" {
+		return nil, errors.New("Consuladdr is empty")
+	}
 	url, err := url.Parse("http://" + Consuladdr)
 	if err != nil {
 		return nil, fmt.Errorf("url.Parse err: %w", err)
@@ -69,26 +73,39 @@ func NewConsul(Consuladdr string, node *Node, daemon *daemon.Daemon, svcList []*
 func NewServiceList(node *Node, daemon *daemon.Daemon) ([]*Service, error) {
 	dcmds := daemon.DCmds
 	serviceList := make([]*Service, 0, len(dcmds))
+	var errs error
 	for _, dcmd := range dcmds {
 		// 忽略已经退出的cmd
 		if dcmd.Status != 1 {
+			errors.Join(errs, errors.New("ignore exited cmd: "+dcmd.Cmd.String()))
 			continue
 		}
 		pidaddr, err := tool.PidAddr()
 		if err != nil {
-			return nil, fmt.Errorf("PidAddr err: %w", err)
+			errors.Join(errs, fmt.Errorf("PidAddr err: %w", err))
+			return nil, errs
 		}
 
+		if dcmd.Cmd.Process == nil {
+			errs = errors.Join(errs, errors.New("cmd.Process is nil: "+dcmd.Cmd.String()))
+			continue
+		}
 		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
-		port := tool.Parseport(pidaddr[pid])
+		addr, ok := pidaddr[pid] // *:59869
+		if !ok {
+			errs = errors.Join(errs, errors.New("pidaddr not found: "+dcmd.Cmd.String()))
+			continue
+		}
+		port := tool.Parseport(addr) // 59869
 
-		svc, err := newService(node.Name, svcName(dcmd.Cmd.Args[0], port, pid), node.AdmIp, port) // 防止svc重名-> name:port or name@pid
+		svc, err := newService(node.Name, svcName(filepath.Base(dcmd.Cmd.Args[0]), port, pid), node.AdmIp, port) // 防止svc重名-> name:port or name@pid
 		if err != nil {
-			return nil, fmt.Errorf("NewService err: %w", err)
+			errors.Join(errs, fmt.Errorf("NewService err: %w", err))
+			return nil, errs
 		}
 		serviceList = append(serviceList, svc)
 	}
-	return serviceList, nil
+	return serviceList, errs
 }
 
 func (c *Consul) Register() error {
@@ -106,14 +123,17 @@ func (c *Consul) Register() error {
 			errs = errors.Join(errs, err)
 		}
 		req.Header.Set("Content-Type", "application/json")
+		c.logger.Debugln("register req: ", req)
 		defer req.Body.Close()
 		resp, err := c.client.Do(req)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
-		if resp.StatusCode != http.StatusOK {
+		c.logger.Debugln("register resp: ", resp)
+		if resp != nil && resp.StatusCode != http.StatusOK {
 			errs = errors.Join(errs, errors.New("register failed with status code: "+strconv.Itoa(resp.StatusCode)))
 		}
+		c.logger.Infof("Register service: %v successfully", svc)
 	}
 	return errs
 }
@@ -133,15 +153,17 @@ func (c *Consul) Deregister() error {
 			errs = errors.Join(errs, err)
 		}
 		req.Header.Set("Content-Type", "application/json")
+		c.logger.Debugln("deregister req: ", req)
 		defer req.Body.Close()
 		resp, err := c.client.Do(req)
+		c.logger.Debugln("deregister resp: ", resp)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
-		if resp.StatusCode != http.StatusOK {
+		if resp != nil && resp.StatusCode != http.StatusOK {
 			errs = errors.Join(errs, errors.New("deregister failed with status code: "+strconv.Itoa(resp.StatusCode)))
-			c.logger.Errorln(resp.Body)
 		}
+		c.logger.Infof("Deregister service: %v successfully", svc)
 	}
 	return errs
 }
@@ -186,7 +208,7 @@ func (c *Consul) Watch() {
 }
 
 func (c *Consul) RegisterAgain() error {
-	if err := c.updateSvcList(); err != nil {
+	if err := c.Updatesvclist(); err != nil {
 		return err
 	}
 	if err := c.Deregister(); err != nil {
@@ -199,7 +221,7 @@ func (c *Consul) RegisterAgain() error {
 }
 
 // 更新serviceList
-func (c *Consul) updateSvcList() error {
+func (c *Consul) Updatesvclist() error {
 	svcList, err := NewServiceList(c.Node, c.Daemon)
 	if err != nil {
 		return err

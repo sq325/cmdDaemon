@@ -13,7 +13,7 @@ var (
     args: 
     - --web.listen-address
     - "0.0.0.0:9091"
-    - --web.config.file
+    - --config.file
     - "./cmd/prometheusLinux/prometheus.yml"
     - --web.enable-lifecycle
     - --storage.tsdb.path

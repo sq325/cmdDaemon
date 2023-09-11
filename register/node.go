@@ -24,7 +24,8 @@ import (
 )
 
 var (
-	intfList = []string{"bond0", "eth0", "eth1"}
+	// intfList = []string{"bond0", "eth0", "eth1"}
+	intfList = []string{"en0", "eth0", "eth1"}
 )
 
 // consul node
@@ -62,6 +63,7 @@ func hostAdmIp(intfList []string) (string, error) {
 		if err != nil {
 			continue
 		}
+		break
 	}
 	// no intf found
 	if intf == nil && err != nil {
@@ -74,7 +76,7 @@ func hostAdmIp(intfList []string) (string, error) {
 	for _, addr := range addrs {
 		ipNet, ok := addr.(*net.IPNet)
 		if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
-			addr, ok := netip.AddrFromSlice(ipNet.IP)
+			addr, ok := netip.AddrFromSlice(ipNet.IP.To4())
 			if !ok {
 				fmt.Println("AddrFromSlice failed.")
 				continue

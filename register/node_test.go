@@ -12,25 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tool
+package register
 
 import (
-	"net"
 	"testing"
 )
 
-func Test_pidAddr(t *testing.T) {
-	m, _ := PidAddr()
-	for k, v := range m {
-		t.Log(k, ": ", v)
-		t.Log(net.ResolveTCPAddr("tcp", v))
-	}
+func Test_hostAdmIp(t *testing.T) {
+	t.Log(hostAdmIp(intfList))
 }
 
-func TestPidAddr(t *testing.T) {
-	m, _ := PidAddr()
-	for k, v := range m {
-		t.Log(k, ": ", v)
-	}
-	t.Log(m["79704"])
+func TestNewNode(t *testing.T) {
+	t.Log(NewNode())
 }

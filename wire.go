@@ -26,6 +26,7 @@ import (
 
 	"github.com/google/wire"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // provider
@@ -43,7 +44,7 @@ var (
 )
 
 // injector
-func createLogger() *zap.SugaredLogger {
+func createLogger(level zapcore.Level) *zap.SugaredLogger {
 	panic(wire.Build(NewLogger))
 }
 

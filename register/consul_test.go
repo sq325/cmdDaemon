@@ -13,7 +13,11 @@
 package register
 
 import (
+	"cmdDaemon/daemon"
+	"context"
 	"net"
+	"net/url"
+	"os/exec"
 	"testing"
 )
 
@@ -23,7 +27,28 @@ func TestSplitHostPort(t *testing.T) {
 	t.Log(host)
 }
 
-func Test_hostAdmIp(t *testing.T) {
-	// intf, err := net.InterfaceByName("ent0") // bond0, eth0
+func TestUrlJoin(t *testing.T) {
+	deregisterPath := "/v1/catalog/deregister/"
+	url, err := url.Parse("http://" + "localhost:8500")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(url.String())
+	t.Log(url.JoinPath(deregisterPath).String())
+
+}
+
+func TestNewServiceList(t *testing.T) {
+	node, _ := NewNode()
+	cmd1 := exec.Command("./prometheus", "--config.file=prometheus.yml", "--web.listen-address=:8080")
+	cmd1.Process.Pid = 79704
+	cmd2 := exec.Command("./prometheus", "--config.file=prometheus.yml", "--web.listen-address=:8081")
+	cmd1.Process.Pid = 79705
+	cmds := make([]*exec.Cmd, 0, 2)
+	cmds = append(cmds, cmd1)
+	cmds = append(cmds, cmd2)
+	ctx := context.Background()
+	_daemon := daemon.NewDaemon(ctx, cmds, nil)
+	NewServiceList(node, _daemon)
 
 }
