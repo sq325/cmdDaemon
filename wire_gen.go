@@ -35,8 +35,8 @@ func createDaemon(ctx context.Context, cmds []*exec.Cmd, logger *zap.SugaredLogg
 	return daemonDaemon
 }
 
-func createConsul(Consuladdr string, daemon2 *daemon.Daemon, logger *zap.SugaredLogger) (*register.Consul, error) {
-	node, err := register.NewNode()
+func createConsul(Consuladdr string, daemon2 *daemon.Daemon, intfList []string, logger *zap.SugaredLogger) (*register.Consul, error) {
+	node, err := register.NewNode(intfList)
 	if err != nil {
 		return nil, err
 	}

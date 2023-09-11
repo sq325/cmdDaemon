@@ -1,11 +1,9 @@
 package register
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 )
 
@@ -40,7 +38,7 @@ func newService(nodeName, name, ip string, port any) (*Service, error) {
 	}, err
 }
 
-func (svc *Service) ReqBody() (io.Reader, error) {
+func (svc *Service) ReqBody() ([]byte, error) {
 	requestJson := struct {
 		NodeName       string `json:"Node"`
 		SkipNodeUpdate bool   `json:"SkipNodeUpdate,omitempty"`
@@ -71,8 +69,7 @@ func (svc *Service) ReqBody() (io.Reader, error) {
 	if len(bys) == 0 {
 		return nil, fmt.Errorf("request body is empty, service: %v", svc)
 	}
-	reader := bytes.NewReader(bys)
-	return reader, nil
+	return bys, nil
 }
 
 /*

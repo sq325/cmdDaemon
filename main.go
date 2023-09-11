@@ -27,12 +27,13 @@ const (
 
 // flags
 var (
-	createConfFile *bool   = pflag.Bool("config.createDefault", false, "Generate a default config file.")
-	configFile     *string = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
-	version        *bool   = pflag.BoolP("version", "v", false, "Print version information.")
-	port           *string = pflag.String("web.port", "9090", "Port to listen.")
-	consulAddr     *string = pflag.String("consulAddr", "", "Consul address. e.g. localhost:8500")
-	logLevel       *string = pflag.String("log.level", "info", "Log level. e.g. debug, info, warn, error, dpanic, panic, fatal")
+	createConfFile *bool     = pflag.Bool("config.createDefault", false, "Generate a default config file.")
+	configFile     *string   = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
+	version        *bool     = pflag.BoolP("version", "v", false, "Print version information.")
+	port           *string   = pflag.String("web.port", "9090", "Port to listen.")
+	consulAddr     *string   = pflag.String("consul.addr", "", "Consul address. e.g. localhost:8500")
+	consulIfList   *[]string = pflag.StringSlice("consul.infList", []string{"bond0", "eth0", "eth1"}, `Network interface list. e.g. --consul.infList="v1,v2"`)
+	logLevel       *string   = pflag.String("log.level", "info", "Log level. e.g. debug, info, warn, error, dpanic, panic, fatal")
 
 	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
 	// printConsulConf *bool = pflag.Bool("printConsulConf", false, "Print consul config.")
@@ -122,7 +123,7 @@ func main() {
 	logger.Infoln("Consuladdr: ", *consulAddr)
 	if *consulAddr != "" {
 		onceConsul := sync.OnceValues(func() (*register.Consul, error) {
-			return createConsul(*consulAddr, d, logger)
+			return createConsul(*consulAddr, d, *consulIfList, logger)
 		})
 		consul, err := onceConsul()
 		if err != nil {

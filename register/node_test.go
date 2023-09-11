@@ -13,15 +13,3 @@
 // limitations under the License.
 
 package register
-
-import (
-	"testing"
-)
-
-func Test_hostAdmIp(t *testing.T) {
-	t.Log(hostAdmIp(intfList))
-}
-
-func TestNewNode(t *testing.T) {
-	t.Log(NewNode())
-}

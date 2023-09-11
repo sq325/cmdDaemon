@@ -23,11 +23,6 @@ import (
 	"sort"
 )
 
-var (
-	// intfList = []string{"bond0", "eth0", "eth1"}
-	intfList = []string{"en0", "eth0", "eth1"}
-)
-
 // consul node
 type Node struct {
 	Name  string // hostname
@@ -35,7 +30,7 @@ type Node struct {
 }
 
 // provider
-func NewNode() (*Node, error) {
+func NewNode(intfList []string) (*Node, error) {
 	hostName, _ := os.Hostname()
 	admIp, err := hostAdmIp(intfList)
 	if err != nil {

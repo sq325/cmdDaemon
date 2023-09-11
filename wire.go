@@ -56,7 +56,7 @@ func createDaemon(ctx context.Context, cmds []*exec.Cmd, logger *zap.SugaredLogg
 	panic(wire.Build(DaemonSet))
 }
 
-func createConsul(Consuladdr string, daemon *daemon.Daemon, logger *zap.SugaredLogger) (*register.Consul, error) {
+func createConsul(Consuladdr string, daemon *daemon.Daemon, intfList []string, logger *zap.SugaredLogger) (*register.Consul, error) {
 	wire.Build(ConsulSet)
 	return nil, nil
 }

@@ -13,6 +13,7 @@
 package register
 
 import (
+	"bytes"
 	"cmdDaemon/daemon"
 	"cmdDaemon/internal/tool"
 	"errors"
@@ -52,7 +53,7 @@ type Consul struct {
 // providers
 func NewConsul(Consuladdr string, node *Node, daemon *daemon.Daemon, svcList []*Service, logger *zap.SugaredLogger) (*Consul, error) {
 	if Consuladdr == "" {
-		return nil, errors.New("Consuladdr is empty")
+		return nil, errors.New("consuladdr is empty")
 	}
 	url, err := url.Parse("http://" + Consuladdr)
 	if err != nil {
@@ -114,16 +115,18 @@ func (c *Consul) Register() error {
 
 	// 注册所有services
 	for _, svc := range c.ServiceList {
-		reader, err := svc.ReqBody()
+		bys, err := svc.ReqBody()
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
+		c.logger.Debugln("register req body: ", string(bys))
+		reader := bytes.NewReader(bys)
 		req, err := http.NewRequest("PUT", c.URL.JoinPath(registerPath).String(), reader)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		c.logger.Debugln("register req: ", req)
+		c.logger.Debugf("register req: %+v\n", req)
 		defer req.Body.Close()
 		resp, err := c.client.Do(req)
 		if err != nil {
@@ -133,7 +136,7 @@ func (c *Consul) Register() error {
 		if resp != nil && resp.StatusCode != http.StatusOK {
 			errs = errors.Join(errs, errors.New("register failed with status code: "+strconv.Itoa(resp.StatusCode)))
 		}
-		c.logger.Infof("Register service: %v successfully", svc)
+		c.logger.Infof("Register service: %+v successfully\n", svc)
 	}
 	return errs
 }
@@ -144,10 +147,12 @@ func (c *Consul) Deregister() error {
 
 	// 注销所有services
 	for _, svc := range c.ServiceList {
-		reader, err := svc.ReqBody()
+		bys, err := svc.ReqBody()
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
+		c.logger.Debugln("deregister req body: ", string(bys))
+		reader := bytes.NewReader(bys)
 		req, err := http.NewRequest("PUT", c.URL.JoinPath(deregisterPath).String(), reader)
 		if err != nil {
 			errs = errors.Join(errs, err)
@@ -156,14 +161,14 @@ func (c *Consul) Deregister() error {
 		c.logger.Debugln("deregister req: ", req)
 		defer req.Body.Close()
 		resp, err := c.client.Do(req)
-		c.logger.Debugln("deregister resp: ", resp)
+		c.logger.Debugf("deregister resp: %+v\n", resp)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 		if resp != nil && resp.StatusCode != http.StatusOK {
 			errs = errors.Join(errs, errors.New("deregister failed with status code: "+strconv.Itoa(resp.StatusCode)))
 		}
-		c.logger.Infof("Deregister service: %v successfully", svc)
+		c.logger.Infof("Deregister service: %+v successfully\n", svc)
 	}
 	return errs
 }
