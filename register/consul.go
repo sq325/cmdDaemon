@@ -18,9 +18,9 @@ import (
 	"cmdDaemon/internal/tool"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -236,7 +236,7 @@ func (c *Consul) Updatesvclist() error {
 }
 
 // Only print consul config
-func (c *Consul) PrintConf() {
+func (c *Consul) PrintConf(out io.Writer) {
 	TmplStr := `
 	{{$_len := len .}}
 	{
@@ -256,15 +256,13 @@ func (c *Consul) PrintConf() {
 	sub := func(a, b int) int {
 		return a - b
 	}
-
 	tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
 	if err != nil {
-		panic(err)
+		c.logger.Errorln("Parse consul config failed. ", err)
 	}
-
-	err = tmpl.Execute(os.Stdout, services)
+	err = tmpl.Execute(out, services)
 	if err != nil {
-		panic(err)
+		c.logger.Errorln("Execute consul config failed. ", err)
 	}
 }
 
