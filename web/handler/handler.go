@@ -198,7 +198,6 @@ func (h *Handler) ConsulSvc(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte("No services"))
 		return
 	}
-
 }
 
 // GitPull git pull origin master without SSH_ASKPASS

@@ -212,17 +212,18 @@ func (c *Consul) Watch() {
 	wg.Wait()
 }
 
-func (c *Consul) RegisterAgain() error {
+func (c *Consul) RegisterAgain() (errs error) {
 	if err := c.Updatesvclist(); err != nil {
-		return err
+		return fmt.Errorf("Updatesvclist err: %w, don't RegisterAgain", err)
 	}
 	if err := c.Deregister(); err != nil {
-		return err
+		errs = errors.Join(errs, err)
 	}
 	if err := c.Register(); err != nil {
-		return err
+		errs = errors.Join(errs, err)
+		return errs
 	}
-	return nil
+	return errs
 }
 
 // 更新serviceList

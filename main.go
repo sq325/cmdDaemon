@@ -5,10 +5,14 @@ import (
 	"cmdDaemon/daemon"
 	"cmdDaemon/register"
 	"cmdDaemon/web/handler"
+	"errors"
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -36,9 +40,9 @@ var (
 	consulSvcRegFile *string   = pflag.String("consul.svcRegFile", "./services.json", "Consul service register file name.")
 	logLevel         *string   = pflag.String("log.level", "info", "Log level. e.g. debug, info, warn, error, dpanic, panic, fatal")
 
-	printCmd *bool = pflag.BoolP("printCmd", "p", false, "Print cmds parse from config.")
+	printCmds *bool = pflag.BoolP("printCmds", "p", false, "Print cmds parse from config.")
 
-	killcmds *bool = pflag.Bool("kill", false, "Kill all child processes from config.")
+	killCmds *bool = pflag.Bool("killCmds", false, "Kill all child processes from config.")
 	// printConsulConf *bool = pflag.Bool("printConsulConf", false, "Print consul config.")
 )
 
@@ -62,10 +66,31 @@ func main() {
 		fmt.Println(_version)
 		return
 	}
-	if *printCmd {
+	if *printCmds {
 		cmds := createCmds(conf)
+		if len(cmds) == 0 {
+			fmt.Println("No cmd to print.")
+			return
+		}
 		for _, cmd := range cmds {
 			fmt.Println(cmd.String())
+		}
+		return
+	}
+
+	// Clear potential zombie processes based on the configuration file
+	// only to be used when the daemon panics.
+	if *killCmds {
+		cmds := createCmds(conf)
+		if len(cmds) == 0 {
+			fmt.Println("No cmd to kill.")
+			return
+		}
+		for _, cmd := range cmds {
+			err := killcmd(cmd)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 		return
 	}
@@ -104,13 +129,6 @@ func main() {
 	cmds := createCmds(conf)
 	if len(cmds) == 0 {
 		logger.Fatalln("No cmd to run. Daemon existed.")
-		return
-	}
-
-	// Clear potential zombie processes based on the configuration file
-	// only to be used when the daemon panics.
-	if *killcmds {
-		
 		return
 	}
 
@@ -330,4 +348,27 @@ func NewLogger(level zapcore.Level) *zap.SugaredLogger {
 
 	logger := zap.New(core, zap.AddCaller()).Sugar() // AddCaller() 显示行号和文件名
 	return logger
+}
+
+func killcmd(cmd *exec.Cmd) error {
+	psgrepStr := "ps -eo pid,command | grep " + "\"" + cmd.String() + "\"" + " | grep -v grep | awk '{print $1}'"
+	psgrep := exec.Command("sh", "-c", psgrepStr)
+	psgrepout, err := psgrep.Output()
+	if err != nil {
+		return err
+	}
+	if len(psgrepout) == 0 {
+		return errors.New("psgrep no output")
+	}
+
+	pid, err := strconv.Atoi(strings.TrimSpace(string(psgrepout)))
+	if err != nil {
+		return err
+	}
+	err = syscall.Kill(pid, syscall.SIGTERM)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("kill %d successfully", pid)
+	return nil
 }
