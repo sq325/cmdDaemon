@@ -61,8 +61,13 @@ func NewConsul(Consuladdr string, node *Node, daemon *daemon.Daemon, svcList []*
 	}
 
 	return &Consul{
-		URL:         url,
-		client:      &http.Client{},
+		URL: url,
+		client: &http.Client{
+			Timeout: 10 * time.Second,
+			Transport: &http.Transport{
+				DisableKeepAlives: true,
+			},
+		},
 		DC:          "dc1",
 		Node:        node,
 		ServiceList: svcList,
@@ -132,6 +137,7 @@ func (c *Consul) Register() error {
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
+		// defer c.client.CloseIdleConnections()
 		c.logger.Debugln("register resp: ", resp)
 		if resp != nil && resp.StatusCode != http.StatusOK {
 			errs = errors.Join(errs, errors.New("register failed with status code: "+strconv.Itoa(resp.StatusCode)))
@@ -165,8 +171,13 @@ func (c *Consul) Deregister() error {
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
+		// defer c.client.CloseIdleConnections()
 		if resp != nil && resp.StatusCode != http.StatusOK {
 			errs = errors.Join(errs, errors.New("deregister failed with status code: "+strconv.Itoa(resp.StatusCode)))
+			var body []byte
+			resp.Body.Read(body)
+			bodystr := string(body)
+			c.logger.Debugln("deregister failed, resp body:", bodystr)
 		}
 		c.logger.Infof("Deregister service: %+v successfully\n", svc)
 	}

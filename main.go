@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	_version = "v4.0 2023-09-11"
+	_version = "v4.1 2023-09-13, author: Sun Quan, Updata Info: DisableKeepAlives: true"
 )
 
 // flags
@@ -54,7 +54,6 @@ var (
 
 func init() {
 	pflag.Parse()
-	initConf()
 }
 
 func main() {
@@ -66,6 +65,8 @@ func main() {
 		fmt.Println(_version)
 		return
 	}
+
+	initConf()
 	if *printCmds {
 		cmds := createCmds(conf)
 		if len(cmds) == 0 {
