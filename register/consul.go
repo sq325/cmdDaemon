@@ -120,7 +120,7 @@ func (c *Consul) Register() error {
 
 	// 注册所有services
 	for _, svc := range c.ServiceList {
-		bys, err := svc.ReqBody()
+		bys, err := svc.RegReqBody()
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
@@ -141,6 +141,10 @@ func (c *Consul) Register() error {
 		c.logger.Debugln("register resp: ", resp)
 		if resp != nil && resp.StatusCode != http.StatusOK {
 			errs = errors.Join(errs, errors.New("register failed with status code: "+strconv.Itoa(resp.StatusCode)))
+			var body []byte
+			resp.Body.Read(body)
+			bodystr := string(body)
+			c.logger.Debugln("register failed, resp body:", bodystr)
 		}
 		c.logger.Infof("Register service: %+v successfully\n", svc)
 	}
@@ -153,7 +157,7 @@ func (c *Consul) Deregister() error {
 
 	// 注销所有services
 	for _, svc := range c.ServiceList {
-		bys, err := svc.ReqBody()
+		bys, err := svc.DeregReqBody()
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}

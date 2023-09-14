@@ -155,7 +155,7 @@ func main() {
 		onceConsul := sync.OnceValues(func() (*register.Consul, error) {
 			return createConsul(*consulAddr, d, *consulIfList, logger)
 		})
-		consul, err := onceConsul()
+		consul, err = onceConsul()
 		if err != nil {
 			logger.Errorln("Create consul failed. ", err)
 		}

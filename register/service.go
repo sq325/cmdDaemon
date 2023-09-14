@@ -38,7 +38,7 @@ func newService(nodeName, name, ip string, port any) (*Service, error) {
 	}, err
 }
 
-func (svc *Service) ReqBody() ([]byte, error) {
+func (svc *Service) RegReqBody() ([]byte, error) {
 	requestJson := struct {
 		NodeName       string `json:"Node"`
 		SkipNodeUpdate bool   `json:"SkipNodeUpdate,omitempty"`
@@ -72,6 +72,25 @@ func (svc *Service) ReqBody() ([]byte, error) {
 	return bys, nil
 }
 
+func (svc *Service) DeregReqBody() ([]byte, error) {
+	requestJson := struct {
+		NodeName  string `json:"Node"`
+		ServiceID string `json:"ServiceID"`
+	}{
+		NodeName:  svc.NodeName,
+		ServiceID: svc.Name,
+	}
+
+	bys, err := json.Marshal(requestJson)
+	if err != nil {
+		return nil, err
+	}
+	if len(bys) == 0 {
+		return nil, fmt.Errorf("request body is empty, service: %v", svc)
+	}
+	return bys, nil
+}
+
 /*
 	{
 	  "services": [
@@ -90,4 +109,3 @@ func (svc *Service) ReqBody() ([]byte, error) {
 	  ]
 	}
 */
-
