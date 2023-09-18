@@ -33,12 +33,12 @@ func NewHandler(logger *zap.SugaredLogger, d *daemon.Daemon) *Handler {
 
 // RegisterHandleFunc register all http hanler funcs
 func (h *Handler) RegisterHandleFunc() {
-	http.HandleFunc("/reload", h.Reload)        // reload child processes
-	http.HandleFunc("/restart", h.Restart)      // reload daemon process and child processes
-	http.HandleFunc("/list", h.ListPortAndCmd)  // list all port and cmd
-	http.HandleFunc("/update", h.UpdateConfig)  // update config file
-	http.HandleFunc("/stop", h.Stop)            // stop daemon process
-	http.HandleFunc("/consulsvcs", h.ConsulSvc) // consul service config")
+	http.HandleFunc("/reload", cors(h.Reload))       // reload child processes
+	http.HandleFunc("/restart", cors(h.Restart))     // reload daemon process and child processes
+	http.HandleFunc("/list", cors(h.ListPortAndCmd)) // list all port and cmd
+	http.HandleFunc("/update", h.UpdateConfig)       // update config file
+	http.HandleFunc("/stop", h.Stop)                 // stop daemon process
+	http.HandleFunc("/consulsvcs", h.ConsulSvc)      // consul service config")
 }
 
 // Listen start register handleFuncs and start a http server
@@ -230,4 +230,19 @@ func portFromAddr(addr string) (string, error) {
 		return "", fmt.Errorf("SplitHostPort err: %w", err)
 	}
 	return port, nil
+}
+
+func cors(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")                                                            // 允许访问所有域，可以换成具体url，注意仅具体url才能带cookie信息
+		w.Header().Add("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token") //header的类型
+		w.Header().Add("Access-Control-Allow-Credentials", "true")                                                    //设置为true，允许ajax异步请求带cookie信息
+		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")                             //允许请求方法
+		w.Header().Set("content-type", "application/json;charset=UTF-8")                                              //返回数据格式是json
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		f(w, r)
+	}
 }

@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	_version = "v4.1 2023-09-13, author: Sun Quan, Updata Info: DisableKeepAlives: true"
+	_version = "v4.3 2023-09-18, author: Sun Quan, Updata Info: Allow list,reload,restart cors"
 )
 
 // flags
