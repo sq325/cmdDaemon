@@ -3,7 +3,6 @@ package main
 import (
 	"cmdDaemon/config"
 	"cmdDaemon/daemon"
-	"cmdDaemon/register"
 	"cmdDaemon/web/handler"
 	"errors"
 	"fmt"
@@ -17,33 +16,55 @@ import (
 	"syscall"
 	"time"
 
+	_ "cmdDaemon/docs"
+
 	"context"
 
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	fork "github.com/sevlyar/go-daemon"
 	"github.com/spf13/pflag"
+
+	swaggerFiles "github.com/swaggo/files"
+
+	complementConsul "github.com/sq325/kitComplement/pkg/consul"
+	tool "github.com/sq325/kitComplement/pkg/tool"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/sq325/kitComplement/pkg/instrumentation"
 )
 
 const (
-	_version = "v4.3 2023-09-18, author: Sun Quan, Updata Info: Allow list,reload,restart cors"
+	_service     = "daemon"
+	_version     = "v0.5.0"
+	_versionInfo = "microservice daemon"
 )
 
 // flags
 var (
-	createConfFile   *bool     = pflag.Bool("config.createDefault", false, "Generate a default config file.")
-	configFile       *string   = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
-	version          *bool     = pflag.BoolP("version", "v", false, "Print version information.")
-	port             *string   = pflag.String("web.port", "9090", "Port to listen.")
-	consulAddr       *string   = pflag.String("consul.addr", "", "Consul address. e.g. localhost:8500")
-	consulIfList     *[]string = pflag.StringSlice("consul.infList", []string{"bond0", "eth0", "eth1"}, `Network interface list. e.g. --consul.infList="v1,v2"`)
-	consulSvcRegFile *string   = pflag.String("consul.svcRegFile", "./services.json", "Consul service register file name.")
-	logLevel         *string   = pflag.String("log.level", "info", "Log level. e.g. debug, info, warn, error, dpanic, panic, fatal")
+	createConfFile *bool     = pflag.Bool("config.createDefault", false, "Generate a default config file.")
+	configFile     *string   = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
+	version        *bool     = pflag.BoolP("version", "v", false, "Print version information.")
+	svcIP          *string   = pflag.String("svcIP", "", "svc ip, default hostAdmIp")
+	port           *string   = pflag.String("web.port", "9090", "Port to listen.")
+	consulAddr     *string   = pflag.String("consulAddr", "", "Consul address. e.g. localhost:8500")
+	consulIfList   *[]string = pflag.StringSlice("consul.infList", []string{"bond0", "eth0", "eth1"}, `Network interface list. e.g. --consul.infList="v1,v2"`)
+	// consulSvcRegFile *string   = pflag.String("consul.svcRegFile", "./services.json", "Consul service register file name.")
+	logLevel *string = pflag.String("log.level", "info", "Log level. e.g. debug, info, warn, error, dpanic, panic, fatal")
 
 	printCmds *bool = pflag.BoolP("printCmds", "p", false, "Print cmds parse from config.")
 
 	killCmds *bool = pflag.Bool("killCmds", false, "Kill all child processes from config.")
 	// printConsulConf *bool = pflag.Bool("printConsulConf", false, "Print consul config.")
+)
+
+var (
+	buildTime      string
+	buildGoVersion string
+	author         string
 )
 
 var (
@@ -56,13 +77,20 @@ func init() {
 	pflag.Parse()
 }
 
+// @title			守护进程服务
+// @version		0.5.0
+
+// @license.name	Apache 2.0
 func main() {
 	if *createConfFile {
 		createConfigFile()
 		return
 	}
 	if *version {
-		fmt.Println(_version)
+		fmt.Println(_service, _version)
+		fmt.Println("build time:", buildTime)
+		fmt.Println("go version:", buildGoVersion)
+		fmt.Println("author:", author)
 		return
 	}
 
@@ -144,147 +172,232 @@ func main() {
 	d := onceDaemon()
 	logger.Infoln("Daemon created.")
 	logger.Debugf("daemon: %+v\n", d.DCmds)
-	go d.Run() // run cmds
-
-	// 初始化consul
+	go d.Run()                  // run cmds
 	time.Sleep(5 * time.Second) // wait for cmds running
-	var consul *register.Consul
-	logger.Infoln("Consuladdr: ", *consulAddr)
-	switch {
-	case *consulAddr != "":
-		onceConsul := sync.OnceValues(func() (*register.Consul, error) {
-			return createConsul(*consulAddr, d, *consulIfList, logger)
-		})
-		consul, err = onceConsul()
-		if err != nil {
-			logger.Errorln("Create consul failed. ", err)
-		}
-		logger.Debugf("consul: %+v\n", consul)
-		if consul == nil {
-			break
-		}
-		logger.Infoln("Consul created.")
-		func() {
-			consul.Updatesvclist()
-			if err := consul.Register(); err != nil {
-				logger.Errorln("Register failed. ", err)
-			}
-			logger.Infoln("Register successfully.")
-		}()
-		go func() { // 启watch
-			time.Sleep(10 * time.Second)
-			consul.Watch()
-		}()
-		func() {
-			svcFile, err := os.OpenFile(*consulSvcRegFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-			if err != nil {
-				logger.Errorln("Open service register file failed. ", err)
-			} else {
-				defer svcFile.Close()
-				consul.PrintConf(svcFile)
-			}
-		}()
-	}
 
 	// 初始化handler
-	handler := handler.NewHandler(logger, d)
-	go handler.Listen(*port) // listen manager web port
+	svc := handler.NewSvcManager(logger, d)
+
+	metrics := instrumentation.NewMetrics()
+	instrumentingMiddleware := instrumentation.InstrumentingMiddleware(metrics)
+	healthSvc := func() bool {
+		return svc.Health()
+	}
+
+	mux := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+
+	mux.PUT("/restart",
+		instrumentation.GinHandlerFunc(
+			"PUT",
+			"/restart",
+			instrumentingMiddleware(
+				handler.MakeRestartEndpoint(svc),
+			),
+			handler.DecodeRequest,
+			handler.EncodeResponse,
+		),
+	)
+
+	mux.PUT("/reload",
+		instrumentation.GinHandlerFunc(
+			"PUT",
+			"/reload",
+			instrumentingMiddleware(
+				handler.MakeReloadEndpoint(svc),
+			),
+			handler.DecodeRequest,
+			handler.EncodeResponse,
+		),
+	)
+
+	mux.GET("/list",
+		instrumentation.GinHandlerFunc(
+			"GET",
+			"/list",
+			instrumentingMiddleware(
+				handler.MakeListEndpoint(svc),
+			),
+			handler.DecodeRequest,
+			handler.EncodeResponse,
+		),
+	)
+
+	mux.PUT("/update",
+		instrumentation.GinHandlerFunc(
+			"PUT",
+			"/update",
+			instrumentingMiddleware(
+				handler.MakeUpdateEndpoint(svc),
+			),
+			handler.DecodeRequest,
+			handler.EncodeResponse,
+		),
+	)
+
+	mux.PUT("/stop",
+		instrumentation.GinHandlerFunc(
+			"PUT",
+			"/stop",
+			instrumentingMiddleware(
+				handler.MakeStopEndpoint(svc),
+			),
+			handler.DecodeRequest,
+			handler.EncodeResponse,
+		),
+	)
+
+	mux.Any("/health",
+		func(c *gin.Context) {
+			if healthSvc() {
+				c.String(200, "%s service is healthy", _service)
+				return
+			}
+			c.String(500, "%s service is unhealthy", _service)
+		},
+	)
+	mux.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	mux.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	// register service
+	if *consulAddr != "" {
+		var r complementConsul.Registrar
+		{
+			c := strings.Split(strings.TrimSpace(*consulAddr), ":")
+			ip := c[0]
+			p, _ := strconv.Atoi(c[1])
+			consulClient := complementConsul.NewConsulClient(ip, p)
+			logger := complementConsul.NewLogger()
+			r = complementConsul.NewRegistrar(consulClient, logger)
+		}
+
+		var svc *complementConsul.Service
+		{
+			if *svcIP == "" {
+				*svcIP, err = tool.HostAdmIp(*consulIfList)
+				if err != nil {
+					logger.Errorf("HostAdmIp err: %v; intfList: %+v", err, *consulIfList)
+				}
+			}
+			port, _ := strconv.Atoi(*port)
+			svc = &complementConsul.Service{
+				Name: _service,
+				IP:   *svcIP,
+				Port: port,
+				Check: struct {
+					Path     string
+					Interval string
+					Timeout  string
+				}{
+					Path:     "/health",
+					Interval: "60s",
+					Timeout:  "10s",
+				},
+			}
+		}
+		r.Register(svc)
+		defer r.Deregister(svc)
+	}
+
+	chDone := make(chan struct{}, 1)
+	mux.Use(cors.Default())
+	go func() { // no blocking
+		err := mux.Run(":" + *port)
+		if err != nil {
+			log.Println(err)
+		}
+		chDone <- struct{}{}
+		close(chDone)
+	}()
 
 	// 防止子进程成为僵尸进程
 	defer func() {
 		pid := os.Getpid()
 		cancel()
-		if consul != nil {
-			consul.Deregister()
-		}
 		syscall.Kill(-pid, syscall.SIGTERM)
 		time.Sleep(5 * time.Second)
 	}()
 
 	// 捕捉信号
-	for sig := range signCh {
-		switch sig {
-		// 重新加载配置文件
-		case syscall.SIGHUP:
-			// recover initConf panic
-			var initConfPanic bool
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						logger.Errorf("Reload config failed. %v", r)
-						logger.Infoln("Panic Recover. Nothing changed.")
-						initConfPanic = true
-					}
+	for {
+		select {
+		case sig := <-signCh:
+			switch sig {
+			// 重新加载配置文件
+			case syscall.SIGHUP:
+				// recover initConf panic
+				var initConfPanic bool
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							logger.Errorf("Reload config failed. %v", r)
+							logger.Infoln("Panic Recover. Nothing changed.")
+							initConfPanic = true
+						}
+					}()
+					initConf()
 				}()
-				initConf()
-			}()
-			if initConfPanic { // if initConf panic, do not reload
-				break
-			}
-
-			logger.Infoln("Reloaded config.")
-			cmds := config.GenerateCmds(conf)
-			if len(cmds) == 0 {
-				logger.Error("No cmd to run. Do not reload.")
-				break
-			}
-			// 关闭所有子进程
-			cancel()
-			var wg sync.WaitGroup
-			for _, dcmd := range d.DCmds {
-				dcmd := dcmd // capture range variable
-				if dcmd.Status == daemon.Exited {
-					continue
-				}
-				pid := dcmd.Cmd.Process.Pid
-				err := syscall.Kill(pid, syscall.SIGTERM)
-				if err != nil {
-					logger.Errorf("Cmd: %s Pid: %d kill failed. %v", dcmd.Cmd.String(), pid, err)
+				if initConfPanic { // if initConf panic, do not reload
+					break
 				}
 
-				// wait for child process exited
-				// if not exited, kill it after 10s
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				logger.Infoln("Reloaded config.")
+				cmds := config.GenerateCmds(conf)
+				if len(cmds) == 0 {
+					logger.Error("No cmd to run. Do not reload.")
+					break
+				}
+				// 关闭所有子进程
+				cancel()
+				var wg sync.WaitGroup
+				for _, dcmd := range d.DCmds {
+					dcmd := dcmd // capture range variable
+					if dcmd.Status == daemon.Exited {
+						continue
+					}
+					pid := dcmd.Cmd.Process.Pid
+					err := syscall.Kill(pid, syscall.SIGTERM)
+					if err != nil {
+						logger.Errorf("Cmd: %s Pid: %d kill failed. %v", dcmd.Cmd.String(), pid, err)
+					}
+
 					// wait for child process exited
-					if dcmd.Cmd == nil || dcmd.Cmd.ProcessState == nil {
-						return
-					}
-					isExited := dcmd.Cmd.ProcessState.Exited()
-					ch := make(chan struct{}, 1)
-					if isExited {
-						ch <- struct{}{}
-					}
-					select {
-					case <-ch:
-					case <-time.After(10 * time.Second):
-						dcmd.Cmd.Process.Kill()
-					}
-				}()
-			}
-			wg.Wait()
-			logger.Infoln("Ctx canceled. All child processes killed.")
-
-			// reload Daemon and run new cmds
-			ctx, cancel = context.WithCancel(context.Background())
-			d.Reload(ctx, cmds)
-			go d.Run()
-
-			// register again
-			if consul != nil {
-				<-time.After(10 * time.Second)
-				if err := consul.RegisterAgain(); err != nil {
-					logger.Errorln("Register again failed. err:", err)
+					// if not exited, kill it after 10s
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						// wait for child process exited
+						if dcmd.Cmd == nil || dcmd.Cmd.ProcessState == nil {
+							return
+						}
+						isExited := dcmd.Cmd.ProcessState.Exited()
+						ch := make(chan struct{}, 1)
+						if isExited {
+							ch <- struct{}{}
+						}
+						select {
+						case <-ch:
+						case <-time.After(10 * time.Second):
+							dcmd.Cmd.Process.Kill()
+						}
+					}()
 				}
-				logger.Infoln("Register again successfully.")
-				logger.Infoln("Restart completely.")
-			}
+				wg.Wait()
+				logger.Infoln("Ctx canceled. All child processes killed.")
 
-		// kill all child processes
-		case syscall.SIGTERM:
-			logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
-			return // defer 会kill所有子进程
+				// reload Daemon and run new cmds
+				ctx, cancel = context.WithCancel(context.Background())
+				d.Reload(ctx, cmds)
+				go d.Run()
+
+			// kill all child processes
+			case syscall.SIGTERM:
+				logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
+				return // defer 会kill所有子进程
+			}
+		case <-chDone: // http server exited
+			logger.Infoln("Web server exited.")
+			return
 		}
 	}
 }

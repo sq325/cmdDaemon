@@ -1,0 +1,88 @@
+definitions:
+  handler.SvcManagerResponse:
+    properties:
+      err:
+        type: string
+      v:
+        type: string
+    type: object
+info:
+  contact: {}
+  license:
+    name: Apache 2.0
+  title: 守护进程服务
+  version: 0.5.0
+paths:
+  /list:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SvcManagerResponse'
+      summary: 列出所有子进程的端口和命令
+      tags:
+      - Reload
+  /reload:
+    put:
+      consumes:
+      - application/json
+      description: ?update 可以选择是否更新配置文件daemon.yml
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SvcManagerResponse'
+      summary: reload守护进程和子进程
+      tags:
+      - Reload
+  /restart:
+    put:
+      consumes:
+      - application/json
+      description: ?update 可以选择是否更新配置文件daemon.yml
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SvcManagerResponse'
+      summary: 重启daemon进程和所有子进程
+      tags:
+      - Restart
+  /stop:
+    put:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SvcManagerResponse'
+      summary: 更新配置文件
+      tags:
+      - Stop
+  /update:
+    put:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SvcManagerResponse'
+      summary: 更新配置文件
+      tags:
+      - Update
+swagger: "2.0"

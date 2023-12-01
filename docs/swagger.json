@@ -1,0 +1,138 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "守护进程服务",
+        "contact": {},
+        "license": {
+            "name": "Apache 2.0"
+        },
+        "version": "0.5.0"
+    },
+    "paths": {
+        "/list": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reload"
+                ],
+                "summary": "列出所有子进程的端口和命令",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.SvcManagerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/reload": {
+            "put": {
+                "description": "?update 可以选择是否更新配置文件daemon.yml",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reload"
+                ],
+                "summary": "reload守护进程和子进程",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.SvcManagerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/restart": {
+            "put": {
+                "description": "?update 可以选择是否更新配置文件daemon.yml",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Restart"
+                ],
+                "summary": "重启daemon进程和所有子进程",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.SvcManagerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/stop": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Stop"
+                ],
+                "summary": "更新配置文件",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.SvcManagerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/update": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Update"
+                ],
+                "summary": "更新配置文件",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.SvcManagerResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.SvcManagerResponse": {
+            "type": "object",
+            "properties": {
+                "err": {
+                    "type": "string"
+                },
+                "v": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
