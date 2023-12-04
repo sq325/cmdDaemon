@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -34,12 +35,14 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	daemontool "cmdDaemon/internal/tool"
+
 	"github.com/sq325/kitComplement/pkg/instrumentation"
 )
 
 const (
 	_service     = "daemon"
-	_version     = "v0.5.0"
+	_version     = "v0.5.1"
 	_versionInfo = "microservice daemon"
 )
 
@@ -51,6 +54,7 @@ var (
 	svcIP          *string   = pflag.String("svcIP", "", "svc ip, default hostAdmIp")
 	port           *string   = pflag.String("web.port", "9090", "Port to listen.")
 	consulAddr     *string   = pflag.String("consulAddr", "", "Consul address. e.g. localhost:8500")
+	registerCmds   *bool     = pflag.Bool("consul.regCmds", false, "Register all child processes to consul.")
 	consulIfList   *[]string = pflag.StringSlice("consul.infList", []string{"bond0", "eth0", "eth1"}, `Network interface list. e.g. --consul.infList="v1,v2"`)
 	// consulSvcRegFile *string   = pflag.String("consul.svcRegFile", "./services.json", "Consul service register file name.")
 	logLevel *string = pflag.String("log.level", "info", "Log level. e.g. debug, info, warn, error, dpanic, panic, fatal")
@@ -78,7 +82,7 @@ func init() {
 }
 
 // @title			守护进程服务
-// @version		0.5.0
+// @version		0.5.1
 
 // @license.name	Apache 2.0
 func main() {
@@ -94,6 +98,7 @@ func main() {
 		return
 	}
 
+	// config init
 	initConf()
 	if *printCmds {
 		cmds := createCmds(conf)
@@ -175,7 +180,7 @@ func main() {
 	go d.Run()                  // run cmds
 	time.Sleep(5 * time.Second) // wait for cmds running
 
-	// 初始化handler
+	// 初始化svcManager
 	svc := handler.NewSvcManager(logger, d)
 
 	metrics := instrumentation.NewMetrics()
@@ -184,6 +189,7 @@ func main() {
 		return svc.Health()
 	}
 
+	// 注册路由
 	mux := gin.Default()
 	gin.SetMode(gin.ReleaseMode)
 
@@ -271,6 +277,7 @@ func main() {
 			r = complementConsul.NewRegistrar(consulClient, logger)
 		}
 
+		// register daemon svc
 		var svc *complementConsul.Service
 		{
 			if *svcIP == "" {
@@ -297,6 +304,61 @@ func main() {
 		}
 		r.Register(svc)
 		defer r.Deregister(svc)
+		pidAddrM, _ := daemontool.PidAddr()
+
+		pattern := regexp.MustCompile(`prometheus_(?P<tag>.+?)\.ya?ml`)
+		if *registerCmds && len(d.DCmds) > 0 {
+			for _, dcmd := range d.DCmds {
+				path := dcmd.Cmd.Path
+				cmdStr := dcmd.Cmd.String()
+				pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
+				addr := pidAddrM[pid]
+				port, _ := strconv.Atoi(daemontool.Parseport(addr))
+
+				var svc *complementConsul.Service
+				{
+					var (
+						name      string
+						tags      []string
+						checkPath string
+					)
+					if strings.Contains(path, "prometheus") {
+						{
+							tagIndex := pattern.SubexpIndex("tag")
+							matches := pattern.FindStringSubmatch(cmdStr)
+							if len(matches) > 0 {
+								tags = append(tags, matches[tagIndex])
+							}
+						}
+						name = "prometheus"
+						checkPath = "/healthy"
+					} else if strings.Contains(path, "alertmanager") {
+						name = "alertmanager"
+						checkPath = "/healthy"
+					} else {
+						name = path
+						checkPath = "/health"
+					}
+					svc = &complementConsul.Service{
+						Name: name,
+						IP:   *svcIP,
+						Port: port,
+						Tags: tags,
+						Check: struct {
+							Path     string
+							Interval string
+							Timeout  string
+						}{
+							Path:     checkPath,
+							Interval: "60s",
+							Timeout:  "10s",
+						},
+					}
+				}
+				r.Register(svc)
+				defer r.Register(svc)
+			}
+		}
 	}
 
 	chDone := make(chan struct{}, 1)
