@@ -15,18 +15,25 @@
 package register
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"sort"
+	"strings"
+	"time"
 )
 
 // consul node
 type Node struct {
-	Name  string // hostname
-	AdmIp string // adm ip
+	Name           string `json:"Node"`                     // hostname
+	AdmIp          string `json:"Address"`                  // adm ip
+	SkipNodeUpdate bool   `json:"SkipNodeUpdate,omitempty"` // skip node update
 }
 
 // provider
@@ -44,6 +51,47 @@ func NewNode(intfList []string) (*Node, error) {
 
 func (n *Node) String() string {
 	return fmt.Sprintf("%s %s", n.Name, n.AdmIp)
+}
+
+// only register node
+func (n *Node) Register(consulAddr string) error {
+	if !strings.HasPrefix(consulAddr, "http://") {
+		consulAddr = "http://" + consulAddr
+	}
+	registerPath := "/v1/catalog/register"
+	u, err := url.Parse(consulAddr)
+	if err != nil {
+		return fmt.Errorf("node url.Parse err: %w", err)
+	}
+	u = u.JoinPath(registerPath)
+
+	n.SkipNodeUpdate = true
+	bys, err := json.Marshal(n)
+	if err != nil {
+		return fmt.Errorf("node json.Marshal err: %w", err)
+	}
+	reader := bytes.NewReader(bys)
+
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+	}
+	req, err := http.NewRequest("PUT", u.String(), reader)
+	if err != nil {
+		return fmt.Errorf("node http.NewRequest err: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	defer req.Body.Close()
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("node client.Do err: %w", err)
+	}
+	if resp != nil && resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("node register failed with status code: %d", resp.StatusCode)
+	}
+	return nil
 }
 
 // 管理地址所在interface规则，en0

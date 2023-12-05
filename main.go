@@ -3,6 +3,7 @@ package main
 import (
 	"cmdDaemon/config"
 	"cmdDaemon/daemon"
+	"cmdDaemon/register"
 	"cmdDaemon/web/handler"
 	"errors"
 	"fmt"
@@ -23,12 +24,14 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	fork "github.com/sevlyar/go-daemon"
 	"github.com/spf13/pflag"
 
 	swaggerFiles "github.com/swaggo/files"
 
+	promcollectors "github.com/prometheus/client_golang/prometheus/collectors"
 	complementConsul "github.com/sq325/kitComplement/pkg/consul"
 	tool "github.com/sq325/kitComplement/pkg/tool"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -36,6 +39,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	daemontool "cmdDaemon/internal/tool"
+	dmetrics "cmdDaemon/web/metrics"
 
 	"github.com/sq325/kitComplement/pkg/instrumentation"
 )
@@ -184,6 +188,8 @@ func main() {
 
 	metrics := instrumentation.NewMetrics()
 	instrumentingMiddleware := instrumentation.InstrumentingMiddleware(metrics)
+	daemonMetrics := dmetrics.NewDaemonMetrics(d)
+	prometheus.Unregister(promcollectors.NewGoCollector())
 	healthSvc := func() bool {
 		return svc.Health()
 	}
@@ -262,7 +268,11 @@ func main() {
 		},
 	)
 	mux.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	mux.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	mux.GET("/metrics", func(c *gin.Context) {
+		daemonMetrics.CmdStatusTotal.With("status", "running").Set(float64(d.GetRunningCmdLen()))
+		daemonMetrics.CmdStatusTotal.With("status", "exited").Set(float64(d.GetExitedCmdLen()))
+		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
+	})
 
 	// register service
 	if *consulAddr != "" {
@@ -305,10 +315,20 @@ func main() {
 		logger.Info("Daemon registered.")
 		defer r.Deregister(svc)
 
+		// register node
+		node, err := register.NewNode(*consulIfList)
+		if err != nil {
+			logger.Errorf("NewNode err: %v", err)
+		}
+		err = node.Register(*consulAddr)
+		if err != nil {
+			logger.Errorf("Node Register err: %v", err)
+		}
+
 		// register cmds
 		if *registerCmds && len(d.DCmds) > 0 {
 			pidAddrM, _ := daemontool.PidAddr()
-			pattern := regexp.MustCompile(`prometheus_(?P<tag>.+?)\.ya?ml`)
+			pattern := regexp.MustCompile(`prometheus_(?P<tag>[\w\.]+?)\.ya?ml`)
 			for _, dcmd := range d.DCmds {
 
 				var svc complementConsul.Service
