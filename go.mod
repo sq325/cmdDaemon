@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/client_golang v1.17.0
 	github.com/sevlyar/go-daemon v0.1.6
 	github.com/spf13/pflag v1.0.5
-	github.com/sq325/kitComplement v0.3.3
+	github.com/sq325/kitComplement v0.3.7
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.2

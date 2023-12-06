@@ -32,8 +32,8 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 
 	promcollectors "github.com/prometheus/client_golang/prometheus/collectors"
-	complementConsul "github.com/sq325/kitComplement/pkg/consul"
-	tool "github.com/sq325/kitComplement/pkg/tool"
+	complementConsul "github.com/sq325/kitComplement/consul"
+	tool "github.com/sq325/kitComplement/tool"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -41,7 +41,7 @@ import (
 	daemontool "cmdDaemon/internal/tool"
 	dmetrics "cmdDaemon/web/metrics"
 
-	"github.com/sq325/kitComplement/pkg/instrumentation"
+	"github.com/sq325/kitComplement/instrumentation"
 )
 
 const (
@@ -286,6 +286,16 @@ func main() {
 			r = complementConsul.NewRegistrar(consulClient, logger)
 		}
 
+		// register node
+		node, err := register.NewNode(*consulIfList)
+		if err != nil {
+			logger.Errorf("NewNode err: %v", err)
+		}
+		err = node.Register(*consulAddr)
+		if err != nil {
+			logger.Errorf("Node Register err: %v", err)
+		}
+
 		// register daemon svc
 		var svc *complementConsul.Service
 		{
@@ -298,6 +308,7 @@ func main() {
 			port, _ := strconv.Atoi(*port)
 			svc = &complementConsul.Service{
 				Name: _service,
+				ID:   _service + "_" + node.Name,
 				IP:   *svcIP,
 				Port: port,
 				Check: struct {
@@ -315,16 +326,6 @@ func main() {
 		logger.Info("Daemon registered.")
 		defer r.Deregister(svc)
 
-		// register node
-		node, err := register.NewNode(*consulIfList)
-		if err != nil {
-			logger.Errorf("NewNode err: %v", err)
-		}
-		err = node.Register(*consulAddr)
-		if err != nil {
-			logger.Errorf("Node Register err: %v", err)
-		}
-
 		// register cmds
 		if *registerCmds && len(d.DCmds) > 0 {
 			pidAddrM, _ := daemontool.PidAddr()
@@ -336,8 +337,16 @@ func main() {
 					path := dcmd.Cmd.Path
 					cmdStr := dcmd.Cmd.String()
 					pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
-					addr := pidAddrM[pid]
-					port, _ := strconv.Atoi(daemontool.Parseport(addr))
+					addr, ok := pidAddrM[pid]
+					if !ok {
+						logger.Errorf("pid not found: %s, name: %s", pid, path)
+						continue
+					}
+					port, err := strconv.Atoi(daemontool.Parseport(addr))
+					if err != nil {
+						logger.Errorf("Parseport addr %s err: %v", err, addr)
+						continue
+					}
 					var (
 						name      string
 						tags      []string
@@ -361,6 +370,7 @@ func main() {
 					}
 					svc = complementConsul.Service{
 						Name: name,
+						ID:   name + "_" + node.Name,
 						IP:   *svcIP,
 						Port: port,
 						Tags: tags,

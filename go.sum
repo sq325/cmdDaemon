@@ -269,8 +269,8 @@ github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPx
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/spf13/pflag v1.0.5 h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
-github.com/sq325/kitComplement v0.3.3 h1:2CJLYQQvXmM8tcNDB8uyZhoLdbb2ZTb5mb8ZjQjcnPE=
-github.com/sq325/kitComplement v0.3.3/go.mod h1:VkgEWMEJ+TWs4LSXCtNXQReDt748QgkEdjSo3PmKLuw=
+github.com/sq325/kitComplement v0.3.7 h1:katfD7TS8ELmtAV13G/0d9ik8/AasBlnbzRAN4rOqsM=
+github.com/sq325/kitComplement v0.3.7/go.mod h1:VkgEWMEJ+TWs4LSXCtNXQReDt748QgkEdjSo3PmKLuw=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
