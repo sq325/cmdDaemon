@@ -46,8 +46,8 @@ import (
 
 const (
 	_service     = "daemon"
-	_version     = "v0.5.3"
-	_versionInfo = "cmdStatusMetrics and register node"
+	_version     = "v0.5.5"
+	_versionInfo = "bugfix"
 )
 
 // flags
@@ -85,7 +85,7 @@ func init() {
 }
 
 // @title			守护进程服务
-// @version		0.5.3
+// @version		0.5.5
 
 // @license.name	Apache 2.0
 func main() {
