@@ -46,7 +46,7 @@ import (
 
 const (
 	_service     = "daemon"
-	_version     = "v0.5.5"
+	_version     = "v0.5.6"
 	_versionInfo = "bugfix"
 )
 
@@ -85,7 +85,7 @@ func init() {
 }
 
 // @title			守护进程服务
-// @version		0.5.5
+// @version		0.5.6
 
 // @license.name	Apache 2.0
 func main() {
@@ -275,8 +275,9 @@ func main() {
 	})
 
 	// register service
+	var r complementConsul.Registrar
+	var node *register.Node
 	if *consulAddr != "" {
-		var r complementConsul.Registrar
 		{
 			c := strings.Split(strings.TrimSpace(*consulAddr), ":")
 			ip := c[0]
@@ -326,8 +327,76 @@ func main() {
 		logger.Info("Daemon registered.")
 		defer r.Deregister(svc)
 
-		// register cmds
-		if *registerCmds && len(d.DCmds) > 0 {
+	}
+
+	// register cmds
+	registerCmdsF := func() {
+		if *consulAddr != "" && *registerCmds && len(d.DCmds) > 0 {
+			pidAddrM, _ := daemontool.PidAddr()
+			pattern := regexp.MustCompile(`prometheus_(?P<tag>[\w\.]+?)\.ya?ml`)
+			for _, dcmd := range d.DCmds {
+				if dcmd.Status == daemon.Exited {
+					continue
+				}
+
+				path := dcmd.Cmd.Path
+				cmdStr := dcmd.Cmd.String()
+				pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
+				addr, ok := pidAddrM[pid]
+				if !ok {
+					logger.Errorf("pid not found: %s, name: %s", pid, path)
+					continue
+				}
+				port, err := strconv.Atoi(daemontool.Parseport(addr))
+				if err != nil {
+					logger.Errorf("Parseport addr %s err: %v", err, addr)
+					continue
+				}
+				var (
+					name      string
+					tags      []string
+					checkPath string
+				)
+
+				if strings.Contains(path, "prometheus") {
+					tagIndex := pattern.SubexpIndex("tag")
+					matches := pattern.FindStringSubmatch(cmdStr)
+					if len(matches) > 0 {
+						tags = append(tags, matches[tagIndex])
+					}
+					name = "prometheus" + ":" + strconv.Itoa(port)
+					checkPath = "/-/healthy"
+				} else if strings.Contains(path, "alertmanager") {
+					name = "alertmanager"
+					checkPath = "/-/healthy"
+				} else {
+					name = path
+					checkPath = "/health"
+				}
+				cmdsvc := complementConsul.Service{
+					Name: name,
+					ID:   name + "_" + node.Name,
+					IP:   *svcIP,
+					Port: port,
+					Tags: tags,
+					Check: struct {
+						Path     string
+						Interval string
+						Timeout  string
+					}{
+						Path:     checkPath,
+						Interval: "60s",
+						Timeout:  "10s",
+					},
+				}
+
+				r.Register(&cmdsvc)
+				logger.Infof("%s:%d registered.", cmdsvc.Name, cmdsvc.Port)
+			}
+		}
+	}
+	deregisterCmdsF := func() {
+		if *consulAddr != "" && *registerCmds && len(d.DCmds) > 0 {
 			pidAddrM, _ := daemontool.PidAddr()
 			pattern := regexp.MustCompile(`prometheus_(?P<tag>[\w\.]+?)\.ya?ml`)
 			for _, dcmd := range d.DCmds {
@@ -366,7 +435,7 @@ func main() {
 					name = path
 					checkPath = "/health"
 				}
-				svc := complementConsul.Service{
+				cmdsvc := complementConsul.Service{
 					Name: name,
 					ID:   name + "_" + node.Name,
 					IP:   *svcIP,
@@ -383,19 +452,20 @@ func main() {
 					},
 				}
 
-				r.Register(&svc)
-				logger.Infof("%s:%d registered.", svc.Name, svc.Port)
-				defer r.Deregister(&svc)
+				r.Deregister(&cmdsvc)
+				logger.Infof("%s:%d deregistered.", cmdsvc.Name, cmdsvc.Port)
 			}
 		}
 	}
+	registerCmdsF()
+	defer deregisterCmdsF()
 
 	chDone := make(chan struct{}, 1)
 	mux.Use(cors.Default())
 	go func() { // no blocking
 		err := mux.Run(":" + *port)
 		if err != nil {
-			log.Println(err)
+			logger.Errorln(err)
 		}
 		chDone <- struct{}{}
 		close(chDone)
@@ -481,6 +551,8 @@ func main() {
 				d.Reload(ctx, cmds)
 				go d.Run()
 
+				time.Sleep(10 * time.Second)
+				registerCmdsF()
 			// kill all child processes
 			case syscall.SIGTERM:
 				logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
