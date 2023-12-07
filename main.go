@@ -332,59 +332,57 @@ func main() {
 			pattern := regexp.MustCompile(`prometheus_(?P<tag>[\w\.]+?)\.ya?ml`)
 			for _, dcmd := range d.DCmds {
 
-				var svc complementConsul.Service
-				{
-					path := dcmd.Cmd.Path
-					cmdStr := dcmd.Cmd.String()
-					pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
-					addr, ok := pidAddrM[pid]
-					if !ok {
-						logger.Errorf("pid not found: %s, name: %s", pid, path)
-						continue
-					}
-					port, err := strconv.Atoi(daemontool.Parseport(addr))
-					if err != nil {
-						logger.Errorf("Parseport addr %s err: %v", err, addr)
-						continue
-					}
-					var (
-						name      string
-						tags      []string
-						checkPath string
-					)
-
-					if strings.Contains(path, "prometheus") {
-						tagIndex := pattern.SubexpIndex("tag")
-						matches := pattern.FindStringSubmatch(cmdStr)
-						if len(matches) > 0 {
-							tags = append(tags, matches[tagIndex])
-						}
-						name = "prometheus" + ":" + strconv.Itoa(port)
-						checkPath = "/-/healthy"
-					} else if strings.Contains(path, "alertmanager") {
-						name = "alertmanager"
-						checkPath = "/-/healthy"
-					} else {
-						name = path
-						checkPath = "/health"
-					}
-					svc = complementConsul.Service{
-						Name: name,
-						ID:   name + "_" + node.Name,
-						IP:   *svcIP,
-						Port: port,
-						Tags: tags,
-						Check: struct {
-							Path     string
-							Interval string
-							Timeout  string
-						}{
-							Path:     checkPath,
-							Interval: "60s",
-							Timeout:  "10s",
-						},
-					}
+				path := dcmd.Cmd.Path
+				cmdStr := dcmd.Cmd.String()
+				pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
+				addr, ok := pidAddrM[pid]
+				if !ok {
+					logger.Errorf("pid not found: %s, name: %s", pid, path)
+					continue
 				}
+				port, err := strconv.Atoi(daemontool.Parseport(addr))
+				if err != nil {
+					logger.Errorf("Parseport addr %s err: %v", err, addr)
+					continue
+				}
+				var (
+					name      string
+					tags      []string
+					checkPath string
+				)
+
+				if strings.Contains(path, "prometheus") {
+					tagIndex := pattern.SubexpIndex("tag")
+					matches := pattern.FindStringSubmatch(cmdStr)
+					if len(matches) > 0 {
+						tags = append(tags, matches[tagIndex])
+					}
+					name = "prometheus" + ":" + strconv.Itoa(port)
+					checkPath = "/-/healthy"
+				} else if strings.Contains(path, "alertmanager") {
+					name = "alertmanager"
+					checkPath = "/-/healthy"
+				} else {
+					name = path
+					checkPath = "/health"
+				}
+				svc := complementConsul.Service{
+					Name: name,
+					ID:   name + "_" + node.Name,
+					IP:   *svcIP,
+					Port: port,
+					Tags: tags,
+					Check: struct {
+						Path     string
+						Interval string
+						Timeout  string
+					}{
+						Path:     checkPath,
+						Interval: "60s",
+						Timeout:  "10s",
+					},
+				}
+
 				r.Register(&svc)
 				logger.Infof("%s:%d registered.", svc.Name, svc.Port)
 				defer r.Deregister(&svc)
