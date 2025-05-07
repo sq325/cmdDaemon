@@ -41,7 +41,7 @@ func TestUrlJoin(t *testing.T) {
 }
 
 func TestNewServiceList(t *testing.T) {
-	node, _ := NewNode([]string{"en0"})
+	node, _ := NewNode("localhost")
 	cmd1 := exec.Command("./prometheus", "--config.file=prometheus.yml", "--web.listen-address=:8080")
 	cmd1.Process.Pid = 79704
 	cmd2 := exec.Command("./prometheus", "--config.file=prometheus.yml", "--web.listen-address=:8081")

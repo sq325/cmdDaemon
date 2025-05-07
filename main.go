@@ -55,10 +55,10 @@ var (
 	createConfFile *bool     = pflag.Bool("config.createDefault", false, "Generate a default config file.")
 	configFile     *string   = pflag.String("config.file", "./daemon.yml", "Daemon configuration file name.")
 	version        *bool     = pflag.BoolP("version", "v", false, "Print version information.")
-	svcIP          *string   = pflag.String("svcIP", "", "svc ip, default hostAdmIp")
 	port           *string   = pflag.String("web.port", "9090", "Port to listen.")
 	consulAddr     *string   = pflag.String("consul.addr", "", "Consul address. e.g. localhost:8500")
 	registerCmds   *bool     = pflag.Bool("consul.regChild", false, "Register all child processes to consul.")
+	svcIP          *string   = pflag.String("svcIP", "", "svc ip, default hostAdmIp")
 	consulIfList   *[]string = pflag.StringSlice("consul.infList", []string{"bond0", "eth0", "eth1"}, `Network interface list. e.g. --consul.infList="v1,v2"`)
 	// consulSvcRegFile *string   = pflag.String("consul.svcRegFile", "./services.json", "Consul service register file name.")
 	logLevel *string = pflag.String("log.level", "info", "Log level. e.g. debug, info, warn, error, dpanic, panic, fatal")
@@ -274,6 +274,16 @@ func main() {
 		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
 	})
 
+	// hostAdmIp
+	var hostAdmIp string
+	func() {
+		var err error
+		hostAdmIp, err = tool.HostAdmIp(*consulIfList)
+		if err != nil {
+			logger.Errorf("HostAdmIp err: %v; intfList: %+v", err, *consulIfList)
+		}
+	}()
+
 	// register service
 	var r complementConsul.Registrar
 	var node *register.Node
@@ -288,13 +298,18 @@ func main() {
 		}
 
 		// register node
-		node, err := register.NewNode(*consulIfList)
+		if hostAdmIp != "" {
+			node, err = register.NewNode(hostAdmIp)
+		} else {
+			node, err = register.NewNode(*svcIP)
+		}
 		if err != nil {
 			logger.Errorf("NewNode err: %v", err)
-		}
-		err = node.Register(*consulAddr)
-		if err != nil {
-			logger.Errorf("Node Register err: %v", err)
+		} else {
+			err = node.Register(*consulAddr)
+			if err != nil {
+				logger.Errorf("Node Register err: %v", err)
+			}
 		}
 
 		// register daemon svc
@@ -326,7 +341,6 @@ func main() {
 		r.Register(svc)
 		logger.Info("Daemon registered.")
 		defer r.Deregister(svc)
-
 	}
 
 	// register cmds
