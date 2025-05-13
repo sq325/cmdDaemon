@@ -1,6 +1,6 @@
-module cmdDaemon
+module github.com/sq325/cmdDaemon
 
-go 1.21.3
+go 1.24.3
 
 require (
 	github.com/gin-contrib/cors v1.5.0

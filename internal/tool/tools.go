@@ -15,7 +15,7 @@
 package tool
 
 import (
-	"cmdDaemon/daemon"
+	"github.com/sq325/cmdDaemon/daemon"
 	"fmt"
 	"os/exec"
 	"regexp"

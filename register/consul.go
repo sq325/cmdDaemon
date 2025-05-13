@@ -14,8 +14,8 @@ package register
 
 import (
 	"bytes"
-	"cmdDaemon/daemon"
-	"cmdDaemon/internal/tool"
+	"github.com/sq325/cmdDaemon/daemon"
+	"github.com/sq325/cmdDaemon/internal/tool"
 	"errors"
 	"fmt"
 	"io"

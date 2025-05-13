@@ -13,7 +13,7 @@
 package register
 
 import (
-	"cmdDaemon/daemon"
+	"github.com/sq325/cmdDaemon/daemon"
 	"context"
 	"net"
 	"net/url"

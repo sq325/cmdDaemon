@@ -1,8 +1,8 @@
 package main
 
 import (
-	"cmdDaemon/config"
-	"cmdDaemon/daemon"
+	"github.com/sq325/cmdDaemon/config"
+	"github.com/sq325/cmdDaemon/daemon"
 	"context"
 	"os/exec"
 

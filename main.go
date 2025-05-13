@@ -1,10 +1,10 @@
 package main
 
 import (
-	"cmdDaemon/config"
-	"cmdDaemon/daemon"
-	"cmdDaemon/register"
-	"cmdDaemon/web/handler"
+	"github.com/sq325/cmdDaemon/config"
+	"github.com/sq325/cmdDaemon/daemon"
+	"github.com/sq325/cmdDaemon/register"
+	"github.com/sq325/cmdDaemon/web/handler"
 	"errors"
 	"fmt"
 	"log"
@@ -18,7 +18,7 @@ import (
 	"syscall"
 	"time"
 
-	_ "cmdDaemon/docs"
+	_ "github.com/sq325/cmdDaemon/docs"
 
 	"context"
 
@@ -38,8 +38,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	daemontool "cmdDaemon/internal/tool"
-	dmetrics "cmdDaemon/web/metrics"
+	daemontool "github.com/sq325/cmdDaemon/internal/tool"
+	dmetrics "github.com/sq325/cmdDaemon/web/metrics"
 
 	"github.com/sq325/kitComplement/instrumentation"
 )

@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"cmdDaemon/daemon"
+	"github.com/sq325/cmdDaemon/daemon"
 
 	"github.com/go-kit/kit/metrics"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
