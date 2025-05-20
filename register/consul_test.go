@@ -13,12 +13,9 @@
 package register
 
 import (
-	"github.com/sq325/cmdDaemon/daemon"
-	"context"
 	"net"
 	"net/url"
 	"os"
-	"os/exec"
 	"testing"
 	"text/template"
 )
@@ -37,21 +34,6 @@ func TestUrlJoin(t *testing.T) {
 	}
 	t.Log(url.String())
 	t.Log(url.JoinPath(deregisterPath).String())
-
-}
-
-func TestNewServiceList(t *testing.T) {
-	node, _ := NewNode("localhost")
-	cmd1 := exec.Command("./prometheus", "--config.file=prometheus.yml", "--web.listen-address=:8080")
-	cmd1.Process.Pid = 79704
-	cmd2 := exec.Command("./prometheus", "--config.file=prometheus.yml", "--web.listen-address=:8081")
-	cmd1.Process.Pid = 79705
-	cmds := make([]*exec.Cmd, 0, 2)
-	cmds = append(cmds, cmd1)
-	cmds = append(cmds, cmd2)
-	ctx := context.Background()
-	_daemon := daemon.NewDaemon(ctx, cmds, nil)
-	NewServiceList(node, _daemon)
 
 }
 

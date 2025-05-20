@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/sq325/cmdDaemon/internal/tool"
 	"go.uber.org/zap"
 )
 
@@ -26,22 +27,34 @@ type Daemon struct {
 	exitedCmdCh chan *DaemonCmd
 	DCmds       []*DaemonCmd
 
-	Logger *zap.SugaredLogger
+	DCmdMap map[string]*DaemonCmd
+	Logger  *zap.SugaredLogger
 }
 
-func NewDaemon(ctx context.Context, cmds []*exec.Cmd, logger *zap.SugaredLogger) *Daemon {
-	dcmds := make([]*DaemonCmd, 0, len(cmds))
-	for _, cmd := range cmds {
-		dCmd := NewDaemonCmd(ctx, cmd)
-		dcmds = append(dcmds, dCmd)
+func NewDaemon(ctx context.Context, dcmds []*DaemonCmd, logger *zap.SugaredLogger) *Daemon {
+	dcmdMap := make(map[string]*DaemonCmd)
+
+	var admIP string
+	hostname, err := tool.Hostname()
+	if err != nil {
+		logger.Errorln("Get hostname err:", err)
+	} else {
+		logger.Infoln("Hostname:", hostname)
+		admIP, err = tool.IpFromHostname(hostname)
+		if err != nil {
+			logger.Errorln("Get adm ip err:", err)
+		} else {
+			logger.Infoln("Adm IP:", admIP)
+		}
 	}
+
 	return &Daemon{
 		ctx:         ctx,
 		exitedCmdCh: make(chan *DaemonCmd, 20),
 		DCmds:       dcmds,
+		DCmdMap:     dcmdMap,
 		Logger:      logger,
 	}
-
 }
 
 // 主goroutine
@@ -132,7 +145,6 @@ func (d *Daemon) run() {
 	for _, dCmd := range d.DCmds {
 		go dCmd.startAndWait(d.exitedCmdCh)
 	}
-	<-d.ctx.Done()
 }
 
 // resetLimiter reset all cmds' limiter
@@ -143,7 +155,7 @@ func (d *Daemon) resetLimiter() {
 }
 
 // Reload reload all dcmds and ctx
-func (d *Daemon) Reload(ctx context.Context, cmds []*exec.Cmd) {
+func (d *Daemon) Reload(ctx context.Context, cmds []*exec.Cmd, annotationsList []map[string]string) {
 	d.DCmds = make([]*DaemonCmd, 0, len(cmds))
 	// drain channel
 	close(d.exitedCmdCh)
@@ -154,8 +166,8 @@ func (d *Daemon) Reload(ctx context.Context, cmds []*exec.Cmd) {
 
 	d.exitedCmdCh = make(chan *DaemonCmd, 20)
 	d.ctx = ctx
-	for _, cmd := range cmds {
-		dCmd := NewDaemonCmd(d.ctx, cmd)
+	for i, cmd := range cmds {
+		dCmd := NewDaemonCmd(d.ctx, cmd, annotationsList[i])
 		d.DCmds = append(d.DCmds, dCmd)
 	}
 }

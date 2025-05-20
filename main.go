@@ -1,10 +1,6 @@
 package main
 
 import (
-	"github.com/sq325/cmdDaemon/config"
-	"github.com/sq325/cmdDaemon/daemon"
-	"github.com/sq325/cmdDaemon/register"
-	"github.com/sq325/cmdDaemon/web/handler"
 	"errors"
 	"fmt"
 	"log"
@@ -17,6 +13,11 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/sq325/cmdDaemon/config"
+	"github.com/sq325/cmdDaemon/daemon"
+	"github.com/sq325/cmdDaemon/register"
+	"github.com/sq325/cmdDaemon/web/handler"
 
 	_ "github.com/sq325/cmdDaemon/docs"
 
@@ -104,7 +105,7 @@ func main() {
 	// config init
 	initConf()
 	if *printCmds {
-		cmds := createCmds(conf)
+		cmds, _ := config.GenerateCmds(conf)
 		if len(cmds) == 0 {
 			fmt.Println("No cmd to print.")
 			return
@@ -118,7 +119,7 @@ func main() {
 	// Clear potential zombie processes based on the configuration file
 	// only to be used when the daemon panics.
 	if *killCmds {
-		cmds := createCmds(conf)
+		cmds, _ := config.GenerateCmds(conf)
 		if len(cmds) == 0 {
 			fmt.Println("No cmd to kill.")
 			return
@@ -163,7 +164,7 @@ func main() {
 	logger.Debugln("consulAddr: ", *consulAddr)
 
 	// config
-	cmds := createCmds(conf)
+	cmds, annotationsList := config.GenerateCmds(conf)
 	if len(cmds) == 0 {
 		logger.Fatalln("No cmd to run. Daemon existed.")
 		return
@@ -174,8 +175,14 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// 初始化Daemon
+
+	dcmds := make([]*daemon.DaemonCmd, 0, len(cmds))
+	for i, cmd := range cmds {
+		dcmd := daemon.NewDaemonCmd(ctx, cmd, annotationsList[i])
+		dcmds = append(dcmds, dcmd)
+	}
 	onceDaemon := sync.OnceValue(func() *daemon.Daemon {
-		return createDaemon(ctx, cmds, logger)
+		return createDaemon(ctx, dcmds, logger)
 	})
 	d := onceDaemon()
 	logger.Infoln("Daemon created.")
@@ -517,7 +524,7 @@ func main() {
 				}
 
 				logger.Infoln("Reloaded config.")
-				cmds := config.GenerateCmds(conf)
+				cmds, anntationsList := config.GenerateCmds(conf)
 				if len(cmds) == 0 {
 					logger.Error("No cmd to run. Do not reload.")
 					break
@@ -562,7 +569,7 @@ func main() {
 
 				// reload Daemon and run new cmds
 				ctx, cancel = context.WithCancel(context.Background())
-				d.Reload(ctx, cmds)
+				d.Reload(ctx, cmds, anntationsList)
 				go d.Run()
 
 				time.Sleep(10 * time.Second)

@@ -1,39 +1,38 @@
 package config
 
 import (
-	"fmt"
-	"os"
 	"testing"
 )
 
-var (
-	configFile = "../Daemon.yml"
-)
-
-func setup() []byte {
-	configBytes, err := os.ReadFile(configFile)
+func TestUnmarshalDefaultConfig(t *testing.T) {
+	// Test with the DefaultConfig
+	conf, err := Unmarshal([]byte(DefaultConfig))
 	if err != nil {
-		fmt.Println("Read config failed.")
+		t.Fatalf("Expected no error, but got: %v", err)
 	}
-	return configBytes
+
+	if conf == nil {
+		t.Fatal("Expected config to be non-nil")
+	}
+
+	if conf.Cmds[0].Annotations["name"] != "prometheus" {
+		t.Errorf("Expected name to be 'prometheus', but got: %s", conf.Cmds[0].Annotations["name"])
+	}
 }
-func TestUnmarshal(t *testing.T) {
-	configBytes := setup()
-	conf, err := Unmarshal(configBytes)
+func TestGenerateCmds(t *testing.T) {
+	conf, err := Unmarshal([]byte(DefaultConfig))
 	if err != nil {
-		fmt.Println("Unmarshal config failed.")
+		t.Fatalf("Expected no error, but got: %v", err)
 	}
-	cmds := GenerateCmds(conf)
 
-	// cc := exec.Command("./subapp", "-n", "3", "-i", "3s")
-	// cc.Run()
-	// t.Log(cc.Path, cc.Args)
-	for _, c := range cmds {
-		fmt.Println(c.Path, c.Args)
-		fmt.Println(os.Getwd())
-		err := c.Start()
-		fmt.Println("start err: ", err)
-		err = c.Wait()
-		fmt.Println("wait err: ", err)
+	cmds, _ := GenerateCmds(conf)
+	if len(cmds) != 1 {
+		t.Fatalf("Expected 1 command, but got: %d", len(cmds))
+	}
+	if cmds[0].Path != "./cmd/prometheusLinux/prometheus" {
+		t.Errorf("Expected command path to be './cmd/prometheusLinux/prometheus', but got: %s", cmds[0].Path)
+	}
+	if len(cmds[0].Args[1:]) != 9 {
+		t.Fatalf("Expected 9 arguments, but got: %d", len(cmds[0].Args))
 	}
 }

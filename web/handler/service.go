@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"github.com/sq325/cmdDaemon/daemon"
-	"github.com/sq325/cmdDaemon/internal/tool"
 	"errors"
 	"fmt"
 	"net"
@@ -13,6 +11,9 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/sq325/cmdDaemon/daemon"
+	"github.com/sq325/cmdDaemon/internal/tool"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -68,7 +69,7 @@ func (h *Handler) Reload() error {
 }
 
 func (h *Handler) List() []byte {
-	addrCmd, err := tool.AddrCmdMap(h.Daemon.DCmds)
+	addrCmd, err := addrCmdMap(h.Daemon.DCmds)
 	if err != nil {
 		h.logger.Error("AddrCmdMap err:", err)
 		return nil
@@ -118,7 +119,7 @@ func (h *Handler) Health() bool {
 
 // ListPortAndCmd list all cmd and listen port
 func (h *Handler) ListPortAndCmd(c *gin.Context) {
-	addrCmd, err := tool.AddrCmdMap(h.Daemon.DCmds)
+	addrCmd, err := addrCmdMap(h.Daemon.DCmds)
 	if err != nil {
 		h.logger.Error("AddrCmdMap err:", err)
 		c.Writer.WriteHeader(http.StatusInternalServerError)
@@ -221,4 +222,28 @@ func cors(f http.HandlerFunc) http.HandlerFunc {
 		}
 		f(w, r)
 	}
+}
+
+func addrCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
+	if len(dcmds) == 0 {
+		return nil, nil
+	}
+	var addrCmd = make(map[string]string, len(dcmds))
+	pidAddr, err := tool.PidAddr()
+	if err != nil {
+		return nil, fmt.Errorf("pidAddr err: %w", err)
+	}
+
+	for _, dcmd := range dcmds {
+		if dcmd.Cmd == nil || dcmd.Cmd.Process == nil {
+			continue
+		}
+		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
+
+		if addr, ok := pidAddr[pid]; ok {
+			addrCmd[addr] = dcmd.Cmd.String()
+		}
+	}
+
+	return addrCmd, nil
 }

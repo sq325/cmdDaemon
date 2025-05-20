@@ -15,39 +15,13 @@
 package tool
 
 import (
-	"github.com/sq325/cmdDaemon/daemon"
+	"bufio"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 )
-
-// AddrCmdMap return a map of port and cmd
-// addr is raw lsof ip:port column
-func AddrCmdMap(dcmds []*daemon.DaemonCmd) (map[string]string, error) {
-	if len(dcmds) == 0 {
-		return nil, nil
-	}
-	var addrCmd = make(map[string]string, len(dcmds))
-	pidAddr, err := PidAddr()
-	if err != nil {
-		return nil, fmt.Errorf("pidAddr err: %w", err)
-	}
-
-	for _, dcmd := range dcmds {
-		if dcmd.Cmd == nil || dcmd.Cmd.Process == nil {
-			continue
-		}
-		pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
-
-		if addr, ok := pidAddr[pid]; ok {
-			addrCmd[addr] = dcmd.Cmd.String()
-		}
-	}
-
-	return addrCmd, nil
-}
 
 // pidAddr return a map of pid: addr(host:port)
 func PidAddr() (map[string]string, error) {
@@ -71,7 +45,50 @@ func PidAddr() (map[string]string, error) {
 	return pidAddr, nil
 }
 
-
 func Parseport(addr string) string {
 	return addr[strings.LastIndex(addr, ":")+1:]
+}
+
+func Hostname() (string, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "", err
+	}
+	return hostname, err
+}
+
+func IpFromHostname(hostname string) (string, error) {
+	file, err := os.Open("/etc/hosts")
+	if err != nil {
+		return "", fmt.Errorf("无法打开 /etc/hosts 文件: %v", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// 忽略注释和空行
+		if strings.HasPrefix(line, "#") || strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		ip := fields[0]
+		for i := 1; i < len(fields); i++ {
+			if fields[i] == hostname {
+				return ip, nil
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("读取 /etc/hosts 文件时出错: %v", err)
+	}
+
+	return "", fmt.Errorf("在 /etc/hosts 文件中未找到主机名: %s", hostname)
 }

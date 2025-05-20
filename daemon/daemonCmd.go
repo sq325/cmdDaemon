@@ -15,15 +15,17 @@ type DaemonCmd struct {
 	Cmd     *exec.Cmd
 	Limiter *Limiter // 限制重启次数
 
-	Status int   // running: 1, exited: 0
-	Err    error // 退出原因
+	Annotations map[string]string // cmd的注释信息
+	Status      int               // running: 1, exited: 0
+	Err         error             // 退出原因
 }
 
-func NewDaemonCmd(ctx context.Context, cmd *exec.Cmd) *DaemonCmd {
+func NewDaemonCmd(ctx context.Context, cmd *exec.Cmd, anotations map[string]string) *DaemonCmd {
 	return &DaemonCmd{
-		ctx:     ctx,
-		Cmd:     cmd,
-		Limiter: NewLimiter(),
+		ctx:         ctx,
+		Cmd:         cmd,
+		Annotations: anotations,
+		Limiter:     NewLimiter(),
 	}
 }
 
