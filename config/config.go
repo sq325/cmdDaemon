@@ -2,8 +2,11 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 
+	"github.com/sq325/cmdDaemon/internal/tool"
 	"gopkg.in/yaml.v2"
 )
 
@@ -23,7 +26,8 @@ var (
     annotations:
       name: "prometheus"
       port: "9091"
-      hostname: "proxy-a"`
+      hostname: "proxy-a"
+      admIP: "12.12.12.12"`
 )
 
 type Conf struct {
@@ -34,6 +38,13 @@ type Conf struct {
 	} `yaml:"cmds"`
 }
 
+func (c *Conf) Accept(v confVisitor) {
+	if v == nil {
+		return
+	}
+	v(c)
+}
+
 func GenerateCmds(conf *Conf) ([]*exec.Cmd, []map[string]string) {
 	if len(conf.Cmds) == 0 {
 		return nil, nil
@@ -41,6 +52,11 @@ func GenerateCmds(conf *Conf) ([]*exec.Cmd, []map[string]string) {
 
 	cmds := make([]*exec.Cmd, 0, len(conf.Cmds))
 	annotationsList := make([]map[string]string, 0, len(conf.Cmds))
+
+	conf.Accept(withHostName)
+	conf.Accept(withAdmIp)
+	conf.Accept(withName)
+
 	for _, cmd := range conf.Cmds {
 		cmds = append(cmds, exec.Command(cmd.Cmd, cmd.Args...))
 		annotationsList = append(annotationsList, cmd.Annotations)
@@ -56,4 +72,70 @@ func Unmarshal(b []byte) (*Conf, error) {
 		panic(err)
 	}
 	return &conf, err
+}
+
+type confVisitor func(conf *Conf)
+
+func withHostName(c *Conf) {
+	if c == nil {
+		return
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Printf("Error getting hostname: %v\n", err)
+		return
+	}
+	for _, cmd := range c.Cmds {
+		if cmd.Annotations == nil {
+			cmd.Annotations = make(map[string]string, 10)
+		}
+		if cmd.Annotations["hostname"] == "" {
+			cmd.Annotations["hostname"] = hostname
+		}
+	}
+}
+
+func withAdmIp(c *Conf) {
+	if c == nil {
+		return
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println("Error getting hostname:", err)
+		return
+	}
+	admIP, err := tool.IpFromHostname(hostname)
+	if err != nil {
+		fmt.Printf("Error getting IP from hostname: %v\n", err)
+		return
+	}
+
+	for _, cmd := range c.Cmds {
+		if cmd.Annotations == nil {
+			cmd.Annotations = make(map[string]string, 10)
+		}
+		if cmd.Annotations["admIP"] == "" {
+			cmd.Annotations["admIP"] = admIP
+		}
+	}
+}
+
+func withName(c *Conf) {
+	if c == nil {
+		return
+	}
+
+	for _, cmd := range c.Cmds {
+		if cmd.Annotations == nil {
+			cmd.Annotations = make(map[string]string, 10)
+		}
+		if cmd.Annotations["name"] == "" {
+			if cmd.Annotations == nil {
+				cmd.Annotations = make(map[string]string, 10)
+			}
+			cmd.Annotations["name"] = filepath.Base(cmd.Cmd)
+		}
+	}
 }

@@ -49,14 +49,6 @@ func Parseport(addr string) string {
 	return addr[strings.LastIndex(addr, ":")+1:]
 }
 
-func Hostname() (string, error) {
-	hostname, err := os.Hostname()
-	if err != nil {
-		return "", err
-	}
-	return hostname, err
-}
-
 func IpFromHostname(hostname string) (string, error) {
 	file, err := os.Open("/etc/hosts")
 	if err != nil {

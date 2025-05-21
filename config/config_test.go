@@ -25,7 +25,7 @@ func TestGenerateCmds(t *testing.T) {
 		t.Fatalf("Expected no error, but got: %v", err)
 	}
 
-	cmds, _ := GenerateCmds(conf)
+	cmds, anos := GenerateCmds(conf)
 	if len(cmds) != 1 {
 		t.Fatalf("Expected 1 command, but got: %d", len(cmds))
 	}
@@ -35,4 +35,12 @@ func TestGenerateCmds(t *testing.T) {
 	if len(cmds[0].Args[1:]) != 9 {
 		t.Fatalf("Expected 9 arguments, but got: %d", len(cmds[0].Args))
 	}
+
+	if anos[0]["name"] != "prometheus" {
+		t.Errorf("Expected name to be 'prometheus', but got: %s", anos[0]["name"])
+	}
+	if anos[0]["port"] != "9091" {
+		t.Errorf("Expected port to be '9091', but got: %s", anos[0]["port"])
+	}
+
 }

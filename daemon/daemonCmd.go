@@ -15,7 +15,7 @@ type DaemonCmd struct {
 	Cmd     *exec.Cmd
 	Limiter *Limiter // 限制重启次数
 
-	Annotations map[string]string // cmd的注释信息
+	Annotations map[string]string // cmd的注释信息, name, hostName, admIP, port
 	Status      int               // running: 1, exited: 0
 	Err         error             // 退出原因
 }

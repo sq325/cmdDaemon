@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/sq325/cmdDaemon/internal/tool"
 	"go.uber.org/zap"
 )
 
@@ -33,20 +32,6 @@ type Daemon struct {
 
 func NewDaemon(ctx context.Context, dcmds []*DaemonCmd, logger *zap.SugaredLogger) *Daemon {
 	dcmdMap := make(map[string]*DaemonCmd)
-
-	var admIP string
-	hostname, err := tool.Hostname()
-	if err != nil {
-		logger.Errorln("Get hostname err:", err)
-	} else {
-		logger.Infoln("Hostname:", hostname)
-		admIP, err = tool.IpFromHostname(hostname)
-		if err != nil {
-			logger.Errorln("Get adm ip err:", err)
-		} else {
-			logger.Infoln("Adm IP:", admIP)
-		}
-	}
 
 	return &Daemon{
 		ctx:         ctx,

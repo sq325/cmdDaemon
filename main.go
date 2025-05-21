@@ -46,9 +46,15 @@ import (
 )
 
 const (
-	_service     = "daemon"
-	_version     = "v0.5.6"
-	_versionInfo = "bugfix"
+	_service = "cmddaemon"
+)
+
+var (
+	_versionInfo   string
+	buildTime      string
+	buildGoVersion string
+	_version       string
+	author         string
 )
 
 // flags
@@ -70,12 +76,6 @@ var (
 )
 
 var (
-	buildTime      string
-	buildGoVersion string
-	author         string
-)
-
-var (
 	conf *config.Conf
 
 	signCh = make(chan os.Signal)
@@ -86,8 +86,6 @@ func init() {
 }
 
 // @title			守护进程服务
-// @version		0.5.6
-
 // @license.name	Apache 2.0
 func main() {
 	if *createConfFile {
@@ -99,6 +97,7 @@ func main() {
 		fmt.Println("build time:", buildTime)
 		fmt.Println("go version:", buildGoVersion)
 		fmt.Println("author:", author)
+		fmt.Println("version info:", _versionInfo)
 		return
 	}
 
