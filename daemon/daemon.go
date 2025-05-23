@@ -3,10 +3,11 @@ package daemon
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"os/exec"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/sq325/cmdDaemon/internal/tool"
 )
 
 const (
@@ -26,18 +27,15 @@ type Daemon struct {
 	exitedCmdCh chan *DaemonCmd
 	DCmds       []*DaemonCmd
 
-	DCmdMap map[string]*DaemonCmd
-	Logger  *zap.SugaredLogger
+	Logger *slog.Logger
 }
 
-func NewDaemon(ctx context.Context, dcmds []*DaemonCmd, logger *zap.SugaredLogger) *Daemon {
-	dcmdMap := make(map[string]*DaemonCmd)
+func NewDaemon(ctx context.Context, dcmds []*DaemonCmd, logger *slog.Logger) *Daemon {
 
 	return &Daemon{
 		ctx:         ctx,
 		exitedCmdCh: make(chan *DaemonCmd, 20),
 		DCmds:       dcmds,
-		DCmdMap:     dcmdMap,
 		Logger:      logger,
 	}
 }
@@ -58,7 +56,7 @@ func (d *Daemon) Run() {
 				return
 			case <-limitResetTicker.C:
 				d.resetLimiter()
-				d.Logger.Infoln("Reseted all cmd's limiter")
+				d.Logger.Info("Reseted all cmd's limiter")
 			}
 		}
 	}()
@@ -72,14 +70,14 @@ func (d *Daemon) Run() {
 			case <-d.ctx.Done():
 				return
 			case <-printCmdTicker.C:
-				d.Logger.Infoln("Print all cmd's limiter")
+				d.Logger.Info("Print all cmd's limiter")
 				for _, dCmd := range d.DCmds {
 					if dCmd.Status == Exited {
-						d.Logger.Errorln("Cmd:", dCmd.Cmd.String(), "exited")
+						d.Logger.Error("Command exited", "cmd", dCmd.Cmd.String())
 						continue
 					}
 					dCmd.mu.Lock()
-					d.Logger.Infoln(dCmd.Cmd.String(), ". Pid:", dCmd.Cmd.Process.Pid, ". Restarted times:", dCmd.Limiter.count)
+					d.Logger.Info("Command status", "cmd", dCmd.Cmd.String(), "pid", dCmd.Cmd.Process.Pid, "restarts", dCmd.Limiter.count)
 					dCmd.mu.Unlock()
 				}
 				printCmdTicker.Reset(15 * time.Minute)
@@ -99,8 +97,8 @@ func (d *Daemon) Run() {
 		case dcmd := <-d.exitedCmdCh:
 			// 打印错误原因
 			dcmd.mu.Lock()
-			d.Logger.Warnf("Cmd %s Err: %v", dcmd.Cmd.String(), dcmd.Err)
-			d.Logger.Warnln("Restarting cmd:", dcmd.Cmd.String(), ". Restarted times:", dcmd.Limiter.count)
+			d.Logger.Warn("Command error", "cmd", dcmd.Cmd.String(), "error", dcmd.Err)
+			d.Logger.Warn("Restarting command", "cmd", dcmd.Cmd.String(), "restarts", dcmd.Limiter.count)
 			dcmd.mu.Unlock()
 			go func() {
 				select {
@@ -112,12 +110,12 @@ func (d *Daemon) Run() {
 					dcmd.update()
 					// 没超过limit，重启cmd
 					if ok := dcmd.Limiter.Inc(); ok {
-						d.Logger.Warnln("Restarted.")
+						d.Logger.Warn("Command restarted")
 						dcmd.startAndWait(d.exitedCmdCh)
 						return
 					}
 					// 如果超过limit的次数限制，就不再重启
-					d.Logger.Errorln(dcmd.Cmd.String(), " ", ErrLimitReached)
+					d.Logger.Error("Command restart limit reached", "cmd", dcmd.Cmd.String(), "error", ErrLimitReached.Error())
 					return
 				}
 			}()
@@ -186,4 +184,14 @@ func (d *Daemon) GetRunningCmdLen() int {
 		}
 	}
 	return count
+}
+
+func (d *Daemon) GetDCmdByCmd(cmd *exec.Cmd) (*DaemonCmd, error) {
+	for _, dcmd := range d.DCmds {
+		hash := tool.HashCmd(cmd)
+		if hash == dcmd.CmdHash() {
+			return dcmd, nil
+		}
+	}
+	return nil, ErrNoCmdFound
 }

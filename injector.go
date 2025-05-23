@@ -2,19 +2,12 @@ package main
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/sq325/cmdDaemon/daemon"
-
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-func createLogger(level zapcore.Level) *zap.SugaredLogger {
-	sugaredLogger := NewLogger(level)
-	return sugaredLogger
-}
-
-func createDaemon(ctx context.Context, dcmds []*daemon.DaemonCmd, logger *zap.SugaredLogger) *daemon.Daemon {
+func createDaemon(ctx context.Context, dcmds []*daemon.DaemonCmd, logger *slog.Logger) *daemon.Daemon {
 	daemonDaemon := daemon.NewDaemon(ctx, dcmds, logger)
 	return daemonDaemon
 }

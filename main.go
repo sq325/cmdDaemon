@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -36,8 +37,6 @@ import (
 	complementConsul "github.com/sq325/kitComplement/consul"
 	tool "github.com/sq325/kitComplement/tool"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	daemontool "github.com/sq325/cmdDaemon/internal/tool"
 	dmetrics "github.com/sq325/cmdDaemon/web/metrics"
@@ -146,26 +145,26 @@ func main() {
 	fmt.Printf("Daemon started %s\n", time.Now().Format(time.DateTime))
 
 	// 初始化日志
-	var logger *zap.SugaredLogger
+	var logger *slog.Logger
 	switch *logLevel {
 	case "debug":
-		logger = createLogger(zapcore.DebugLevel)
+		logger = NewLogger(slog.LevelDebug)
 	case "info":
-		logger = createLogger(zapcore.InfoLevel)
+		logger = NewLogger(slog.LevelInfo)
 	case "warn":
-		logger = createLogger(zapcore.WarnLevel)
+		logger = NewLogger(slog.LevelWarn)
 	case "error":
-		logger = createLogger(zapcore.ErrorLevel)
+		logger = NewLogger(slog.LevelError)
 	default:
-		logger = createLogger(zapcore.InfoLevel)
+		logger = NewLogger(slog.LevelInfo)
 	}
-	logger.Debugln("port: ", *port)
-	logger.Debugln("consulAddr: ", *consulAddr)
+	logger.Info("Daemon started.", "time", time.Now().Format(time.DateTime))
+	logger.Info("Daemon config file", "file", *configFile)
 
 	// config
 	cmds, annotationsList := config.GenerateCmds(conf)
 	if len(cmds) == 0 {
-		logger.Fatalln("No cmd to run. Daemon existed.")
+		logger.Error("No cmd to run. Daemon existed.")
 		return
 	}
 
@@ -184,8 +183,8 @@ func main() {
 		return createDaemon(ctx, dcmds, logger)
 	})
 	d := onceDaemon()
-	logger.Infoln("Daemon created.")
-	logger.Debugf("daemon: %+v\n", d.DCmds)
+	logger.Info("Daemon created.")
+	logger.Debug("daemon", "dcmds", fmt.Sprintf("%+v", d.DCmds))
 	go d.Run()                  // run cmds
 	time.Sleep(5 * time.Second) // wait for cmds running
 
@@ -286,7 +285,7 @@ func main() {
 		var err error
 		hostAdmIp, err = tool.HostAdmIp(*consulIfList)
 		if err != nil {
-			logger.Errorf("HostAdmIp err: %v; intfList: %+v", err, *consulIfList)
+			logger.Error("HostAdmIp err", "error", err, "intfList", *consulIfList)
 		}
 	}()
 
@@ -310,11 +309,11 @@ func main() {
 			node, err = register.NewNode(*svcIP)
 		}
 		if err != nil {
-			logger.Errorf("NewNode err: %v", err)
+			logger.Error("NewNode err", "error", err)
 		} else {
 			err = node.Register(*consulAddr)
 			if err != nil {
-				logger.Errorf("Node Register err: %v", err)
+				logger.Error("Node Register err", "error", err)
 			}
 		}
 
@@ -324,7 +323,7 @@ func main() {
 			if *svcIP == "" {
 				*svcIP, err = tool.HostAdmIp(*consulIfList)
 				if err != nil {
-					logger.Errorf("HostAdmIp err: %v; intfList: %+v", err, *consulIfList)
+					logger.Error("HostAdmIp err", "error", err, "intfList", *consulIfList)
 				}
 			}
 			port, _ := strconv.Atoi(*port)
@@ -364,12 +363,12 @@ func main() {
 				pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
 				addr, ok := pidAddrM[pid]
 				if !ok {
-					logger.Errorf("pid not found: %s, name: %s", pid, path)
+					logger.Error("pid not found", "pid", pid, "name", path)
 					continue
 				}
 				port, err := strconv.Atoi(daemontool.Parseport(addr))
 				if err != nil {
-					logger.Errorf("Parseport addr %s err: %v", err, addr)
+					logger.Error("Parseport err", "addr", addr, "error", err)
 					continue
 				}
 				var (
@@ -411,7 +410,7 @@ func main() {
 				}
 
 				r.Register(&cmdsvc)
-				logger.Infof("%s:%d registered.", cmdsvc.Name, cmdsvc.Port)
+				logger.Info("Service registered", "name", cmdsvc.Name, "port", cmdsvc.Port)
 			}
 		}
 	}
@@ -426,12 +425,12 @@ func main() {
 				pid := strconv.Itoa(dcmd.Cmd.Process.Pid)
 				addr, ok := pidAddrM[pid]
 				if !ok {
-					logger.Errorf("pid not found: %s, name: %s", pid, path)
+					logger.Error("pid not found", "pid", pid, "name", path)
 					continue
 				}
 				port, err := strconv.Atoi(daemontool.Parseport(addr))
 				if err != nil {
-					logger.Errorf("Parseport addr %s err: %v", err, addr)
+					logger.Error("Parseport err", "addr", addr, "error", err)
 					continue
 				}
 				var (
@@ -473,7 +472,7 @@ func main() {
 				}
 
 				r.Deregister(&cmdsvc)
-				logger.Infof("%s:%d deregistered.", cmdsvc.Name, cmdsvc.Port)
+				logger.Info("Service deregistered", "name", cmdsvc.Name, "port", cmdsvc.Port)
 			}
 		}
 	}
@@ -485,7 +484,7 @@ func main() {
 	go func() { // no blocking
 		err := mux.Run(":" + *port)
 		if err != nil {
-			logger.Errorln(err)
+			logger.Error("mux.Run err", "error", err)
 		}
 		chDone <- struct{}{}
 		close(chDone)
@@ -511,8 +510,8 @@ func main() {
 				func() {
 					defer func() {
 						if r := recover(); r != nil {
-							logger.Errorf("Reload config failed. %v", r)
-							logger.Infoln("Panic Recover. Nothing changed.")
+							logger.Error("Reload config failed", "error", r)
+							logger.Info("Panic Recover. Nothing changed.")
 							initConfPanic = true
 						}
 					}()
@@ -522,7 +521,7 @@ func main() {
 					break
 				}
 
-				logger.Infoln("Reloaded config.")
+				logger.Info("Reloaded config.")
 				cmds, anntationsList := config.GenerateCmds(conf)
 				if len(cmds) == 0 {
 					logger.Error("No cmd to run. Do not reload.")
@@ -539,7 +538,7 @@ func main() {
 					pid := dcmd.Cmd.Process.Pid
 					err := syscall.Kill(pid, syscall.SIGTERM)
 					if err != nil {
-						logger.Errorf("Cmd: %s Pid: %d kill failed. %v", dcmd.Cmd.String(), pid, err)
+						logger.Error("Kill failed", "cmd", dcmd.Cmd.String(), "pid", pid, "error", err)
 					}
 
 					// wait for child process exited
@@ -564,7 +563,7 @@ func main() {
 					}()
 				}
 				wg.Wait()
-				logger.Infoln("Ctx canceled. All child processes killed.")
+				logger.Info("Ctx canceled. All child processes killed.")
 
 				// reload Daemon and run new cmds
 				ctx, cancel = context.WithCancel(context.Background())
@@ -575,11 +574,11 @@ func main() {
 				registerCmdsF()
 			// kill all child processes
 			case syscall.SIGTERM:
-				logger.Warnln("Catched a term sign, kill all child processes. ", time.Now().Format(time.DateTime))
+				logger.Warn("Catched a term sign, kill all child processes", "time", time.Now().Format(time.DateTime))
 				return // defer 会kill所有子进程
 			}
 		case <-chDone: // http server exited
-			logger.Infoln("Web server exited.")
+			logger.Info("Web server exited.")
 			return
 		}
 	}
@@ -632,19 +631,27 @@ func initConf() {
 }
 
 // 初始化日志实例
-func NewLogger(level zapcore.Level) *zap.SugaredLogger {
-	writer := os.Stdout
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder // 时间格式：2020-12-16T17:53:30.466+0800
-	// encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder   // 时间格式：2020-12-16T17:53:30.466+0800
-	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder // 在日志文件中使用大写字母记录日志级别
-	encoder := zapcore.NewConsoleEncoder(encoderConfig)
-	writeSyncer := zapcore.AddSync(writer)
+// func NewLogger(level zapcore.Level) *zap.SugaredLogger {
+// 	writer := os.Stdout
+// 	encoderConfig := zap.NewProductionEncoderConfig()
+// 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder // 时间格式：2020-12-16T17:53:30.466+0800
+// 	// encoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder   // 时间格式：2020-12-16T17:53:30.466+0800
+// 	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder // 在日志文件中使用大写字母记录日志级别
+// 	encoder := zapcore.NewConsoleEncoder(encoderConfig)
+// 	writeSyncer := zapcore.AddSync(writer)
 
-	core := zapcore.NewCore(encoder, writeSyncer, level)
+// 	core := zapcore.NewCore(encoder, writeSyncer, level)
 
-	logger := zap.New(core, zap.AddCaller()).Sugar() // AddCaller() 显示行号和文件名
-	return logger
+// 	logger := zap.New(core, zap.AddCaller()).Sugar() // AddCaller() 显示行号和文件名
+// 	return logger
+// }
+
+func NewLogger(level slog.Level) *slog.Logger {
+	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+		Level:     level,
+	}))
+	return l
 }
 
 func killcmd(cmd *exec.Cmd) error {

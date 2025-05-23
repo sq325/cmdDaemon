@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -16,7 +17,6 @@ import (
 	"github.com/sq325/cmdDaemon/internal/tool"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 type SvcManager interface {
@@ -31,12 +31,14 @@ type SvcManager interface {
 // Handler implement SvcManager interface
 // Handler 处理reload和restart请求
 type Handler struct {
-	logger *zap.SugaredLogger
+	logger *slog.Logger
 	Daemon *daemon.Daemon
 }
 
+var _ SvcManager = (*Handler)(nil)
+
 // NewHandler create a new Handler
-func NewSvcManager(logger *zap.SugaredLogger, d *daemon.Daemon) SvcManager {
+func NewSvcManager(logger *slog.Logger, d *daemon.Daemon) SvcManager {
 	return &Handler{
 		logger: logger,
 		Daemon: d,
@@ -61,7 +63,7 @@ func (h *Handler) Reload() error {
 		pid := dcmd.Cmd.Process.Pid
 		err := syscall.Kill(pid, syscall.SIGHUP) // send HUP sig
 		if err != nil {
-			errtmp := fmt.Errorf("Cmd: %s Pid: %d kill failed. %v", dcmd.Cmd.String(), pid, err)
+			errtmp := fmt.Errorf("cmd: %s Pid: %d kill failed. %v", dcmd.Cmd.String(), pid, err)
 			errs = errors.Join(errs, errtmp)
 		}
 	}
@@ -71,7 +73,7 @@ func (h *Handler) Reload() error {
 func (h *Handler) List() []byte {
 	addrCmd, err := addrCmdMap(h.Daemon.DCmds)
 	if err != nil {
-		h.logger.Error("AddrCmdMap err:", err)
+		h.logger.Error("AddrCmdMap error", "error", err)
 		return nil
 	}
 	if addrCmd == nil {
@@ -83,10 +85,10 @@ func (h *Handler) List() []byte {
 		var port string
 		url, err := url.Parse("http://" + addr)
 		if err != nil {
-			h.logger.Error("Parse addr ", addr, " err:", err)
+			h.logger.Error("Parse addr error", "addr", addr, "error", err)
 			port, err = portFromAddr(addr)
 			if err != nil {
-				h.logger.Error("portFromAddr err:", err)
+				h.logger.Error("portFromAddr error", "error", err)
 				bys = append(bys, []byte(addr+" "+cmd+"\n")...)
 				continue
 			}
@@ -101,7 +103,7 @@ func (h *Handler) List() []byte {
 func (h *Handler) Update() error {
 	err := GitPull()
 	if err != nil {
-		h.logger.Error("git pull err:", err)
+		h.logger.Error("git pull error", "error", err)
 	} else {
 		h.logger.Info("git pull success")
 	}
@@ -121,7 +123,7 @@ func (h *Handler) Health() bool {
 func (h *Handler) ListPortAndCmd(c *gin.Context) {
 	addrCmd, err := addrCmdMap(h.Daemon.DCmds)
 	if err != nil {
-		h.logger.Error("AddrCmdMap err:", err)
+		h.logger.Error("AddrCmdMap error", "error", err)
 		c.Writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -134,10 +136,10 @@ func (h *Handler) ListPortAndCmd(c *gin.Context) {
 		var port string
 		url, err := url.Parse("http://" + addr)
 		if err != nil {
-			h.logger.Error("Parse addr ", addr, " err:", err)
+			h.logger.Error("Parse addr error", "addr", addr, "error", err)
 			port, err = portFromAddr(addr)
 			if err != nil {
-				h.logger.Error("portFromAddr err:", err)
+				h.logger.Error("portFromAddr error", "error", err)
 				c.Writer.Write([]byte(addr + " " + cmd + "\n"))
 				continue
 			}
@@ -153,7 +155,7 @@ func (h *Handler) ListPortAndCmd(c *gin.Context) {
 func (h *Handler) UpdateConfig(c *gin.Context) {
 	err := GitPull()
 	if err != nil {
-		h.logger.Error("git pull err:", err)
+		h.logger.Error("git pull error", "error", err)
 		c.Writer.Write([]byte("git pull err"))
 	} else {
 		h.logger.Info("git pull success")

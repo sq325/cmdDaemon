@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os/exec"
 	"sync"
+
+	"github.com/sq325/cmdDaemon/internal/tool"
 )
 
 // DaemonCmd is a cmd that managed by daemon
@@ -70,4 +72,11 @@ func (dcmd *DaemonCmd) startAndWait(ch chan<- *DaemonCmd) {
 	default:
 		ch <- dcmd
 	}
+}
+
+// CmdHash return a hash of the cmd
+// the hash is computed by the name and args of the cmd
+// args are sorted
+func (dcmd *DaemonCmd) CmdHash() string {
+	return tool.HashCmd(dcmd.Cmd)
 }

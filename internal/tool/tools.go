@@ -17,9 +17,11 @@ package tool
 import (
 	"bufio"
 	"fmt"
+	"hash/fnv"
 	"os"
 	"os/exec"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -83,4 +85,28 @@ func IpFromHostname(hostname string) (string, error) {
 	}
 
 	return "", fmt.Errorf("在 /etc/hosts 文件中未找到主机名: %s", hostname)
+}
+
+func HashCmd(cmd *exec.Cmd) string {
+	if cmd == nil || len(cmd.Args) == 0 {
+		return ""
+	}
+
+	if len(cmd.Args) == 1 {
+		hasher := fnv.New64a()
+		hasher.Write([]byte(cmd.Args[0]))
+		return fmt.Sprintf("%x", hasher.Sum64())
+	}
+
+	name := cmd.Args[0]
+	args := make([]string, 0, len(cmd.Args)-1)
+	args = append(args, cmd.Args[1:]...)
+	sort.Strings(args)
+
+	hasher := fnv.New64a()
+	hasher.Write([]byte(name))
+	hasher.Write([]byte(" "))
+	hasher.Write([]byte(strings.Join(args, " ")))
+
+	return fmt.Sprintf("%x", hasher.Sum64())
 }
