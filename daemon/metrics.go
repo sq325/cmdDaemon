@@ -29,6 +29,7 @@ var _ prometheus.Collector = (*daemonCollector)(nil)
 
 func (collector *daemonCollector) Describe(ch chan<- *prometheus.Desc) {
 	dcmdStatus.Describe(ch)
+	dcmdRestartCount.Describe(ch)
 }
 
 func (collector *daemonCollector) Collect(ch chan<- prometheus.Metric) {

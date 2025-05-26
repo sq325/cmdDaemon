@@ -1,4 +1,4 @@
-.PYONY: arm linux vendor-build linux-arm build darwin windows run help
+.PHONY: arm linux vendor-build linux-arm build darwin windows run help
 
 buildTime ?= $(shell date '+%Y-%m-%d_%H:%M:%S')
 modName := $(shell go list -m)
@@ -8,7 +8,7 @@ buildGoVersion := $(shell go version|awk '{print $$3}')
 author := $(shell git config user.name)
 tag := $(shell git describe --tags --abbrev=0 2>/dev/null)
 commitInfo := $(shell git log -1 --format=%s $(tag) 2>/dev/null)
-LDFLAGS := -X '$(modName)/cmd.projectName=$(projectName)' -X '$(modName)/cmd.buildTime=$(buildTime)' -X '$(modName)/cmd.buildGoVersion=$(buildGoVersion)' -X '$(modName)/cmd.author=$(author)' -X '$(modName)/cmd._version=$(tag)' -X '$(modName)/cmd._versionInfo=$(commitInfo)'
+LDFLAGS := -X '$(modName)/main.projectName=$(projectName)' -X '$(modName)/main.buildTime=$(buildTime)' -X '$(modName)/main.buildGoVersion=$(buildGoVersion)' -X '$(modName)/main.author=$(author)' -X '$(modName)/main._version=$(tag)' -X '$(modName)/main._versionInfo=$(commitInfo)'
 version ?= $(shell git describe --tags --abbrev=0)
 
 build: 

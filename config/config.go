@@ -21,14 +21,14 @@ var (
       - --web.enable-lifecycle
       - --storage.tsdb.path
       - "./cmd/prometheusLinux/data1/"
-      - --storage.tsdb.retention
+      - --storage.tsdb.retention.time
       - 7d
     annotations:
       name: "prometheus"
       port: "9091"
       hostname: "proxy-a"
       admIP: "12.12.12.12"
-			metricsPath: "/metrics"`
+      metricsPath: "/metrics"`
 )
 
 type Conf struct {
