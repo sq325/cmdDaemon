@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sq325/cmdDaemon/internal/tool"
 )
 
@@ -111,6 +112,12 @@ func (d *Daemon) Run() {
 					// 没超过limit，重启cmd
 					if ok := dcmd.Limiter.Inc(); ok {
 						d.Logger.Warn("Command restarted")
+						dcmdRestartCount.WithLabelValues(
+							dcmd.Annotations["name"],
+							dcmd.Annotations["port"],
+							dcmd.Annotations["hostName"],
+							dcmd.Annotations["admIP"],
+						).Inc()
 						dcmd.startAndWait(d.exitedCmdCh)
 						return
 					}
@@ -194,4 +201,15 @@ func (d *Daemon) GetDCmdByCmd(cmd *exec.Cmd) (*DaemonCmd, error) {
 		}
 	}
 	return nil, ErrNoCmdFound
+}
+
+func (d *Daemon) RegisterMetrics(r prometheus.Registerer) error {
+	if r == nil {
+		return errors.New("prometheus registerer is nil")
+	}
+	collector := &daemonCollector{d: d}
+	if err := r.Register(collector); err != nil {
+		return err
+	}
+	return nil
 }

@@ -188,13 +188,15 @@ func main() {
 	// 初始化svcManager
 	svc := handler.NewSvcManager(logger, d)
 
-	reg := prometheus.DefaultRegisterer
+	reg := prometheus.NewRegistry()
 	{
 		reg.Unregister(promcollectors.NewGoCollector())
 		reg.MustRegister(httpRequestsTotal)
 		reg.MustRegister(httpRequestDuration)
 		reg.MustRegister(httpRequestErrorTotal)
 	}
+	d.RegisterMetrics(reg)
+	metricsHandler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
 
 	healthSvc := func() bool {
 		return svc.Health()
@@ -258,7 +260,7 @@ func main() {
 		},
 	)
 	mux.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	mux.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	mux.GET("/metrics", gin.WrapH(metricsHandler))
 
 	// hostAdmIp
 	var hostAdmIp string
@@ -706,5 +708,4 @@ func prometheusMiddleware() gin.HandlerFunc {
 			httpRequestErrorTotal.WithLabelValues(method, endpoint, code).Inc()
 		}
 	}
-
 }

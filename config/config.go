@@ -27,14 +27,18 @@ var (
       name: "prometheus"
       port: "9091"
       hostname: "proxy-a"
-      admIP: "12.12.12.12"`
+      admIP: "12.12.12.12"
+			metricsPath: "/metrics"`
 )
 
 type Conf struct {
 	Cmds []struct {
-		Cmd         string            `yaml:"cmd"`
-		Args        []string          `yaml:"args"`
-		Annotations map[string]string `yaml:"annotations,omitempty"`
+		Cmd  string   `yaml:"cmd"`
+		Args []string `yaml:"args"`
+		// Annotations for the command, such as name, port, hostname, admIP, etc.
+		// port must be set if the command listens on a port
+		// if no metrics, set metricsPath to ""
+		Annotations map[string]string `yaml:"annotations"`
 	} `yaml:"cmds"`
 }
 

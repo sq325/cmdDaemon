@@ -98,11 +98,11 @@ func (c *coordinator) loadconfig() error {
 
 func (c *coordinator) registerMetrics(r prometheus.Registerer) {
 	configSuccess := prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "cmdDaemon_config_last_reload_successful",
+		Name: "daemon_config_last_reload_successful",
 		Help: "Whether the last configuration reload attempt was successful.",
 	})
 	configSuccessTime := prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "cmdDaemon_config_last_reload_success_timestamp_seconds",
+		Name: "daemon_config_last_reload_success_timestamp_seconds",
 		Help: "Timestamp of the last successful configuration reload.",
 	})
 
