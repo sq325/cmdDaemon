@@ -39,9 +39,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	daemontool "github.com/sq325/cmdDaemon/internal/tool"
-	dmetrics "github.com/sq325/cmdDaemon/web/metrics"
-
-	"github.com/sq325/kitComplement/instrumentation"
 )
 
 const (
@@ -191,10 +188,14 @@ func main() {
 	// 初始化svcManager
 	svc := handler.NewSvcManager(logger, d)
 
-	metrics := instrumentation.NewMetrics()
-	instrumentingMiddleware := instrumentation.InstrumentingMiddleware(metrics)
-	daemonMetrics := dmetrics.NewDaemonMetrics(d)
-	prometheus.Unregister(promcollectors.NewGoCollector())
+	reg := prometheus.DefaultRegisterer
+	{
+		reg.Unregister(promcollectors.NewGoCollector())
+		reg.MustRegister(httpRequestsTotal)
+		reg.MustRegister(httpRequestDuration)
+		reg.MustRegister(httpRequestErrorTotal)
+	}
+
 	healthSvc := func() bool {
 		return svc.Health()
 	}
@@ -203,65 +204,49 @@ func main() {
 	mux := gin.Default()
 	gin.SetMode(gin.ReleaseMode)
 
-	mux.PUT("/restart",
-		instrumentation.GinHandlerFunc(
-			"PUT",
-			"/restart",
-			instrumentingMiddleware(
-				handler.MakeRestartEndpoint(svc),
-			),
-			handler.DecodeRequest,
-			handler.EncodeResponse,
-		),
-	)
+	mux.Use(prometheusMiddleware())
 
-	mux.PUT("/reload",
-		instrumentation.GinHandlerFunc(
-			"PUT",
-			"/reload",
-			instrumentingMiddleware(
-				handler.MakeReloadEndpoint(svc),
-			),
-			handler.DecodeRequest,
-			handler.EncodeResponse,
-		),
-	)
+	mux.PUT("/restart", func(c *gin.Context) {
+		if err := svc.Restart(); err != nil {
+			c.JSON(500, handler.SvcManagerResponse{Err: err.Error()})
+			return
+		}
+		c.JSON(200, handler.SvcManagerResponse{V: "ok"})
+	})
 
-	mux.GET("/list",
-		instrumentation.GinHandlerFunc(
-			"GET",
-			"/list",
-			instrumentingMiddleware(
-				handler.MakeListEndpoint(svc),
-			),
-			handler.DecodeRequest,
-			handler.EncodeResponse,
-		),
-	)
+	mux.PUT("/reload", func(c *gin.Context) {
+		err := svc.Reload()
+		if err != nil {
+			c.JSON(500, handler.SvcManagerResponse{Err: err.Error()})
+			return
+		}
+		c.JSON(200, handler.SvcManagerResponse{V: "ok"})
+	})
 
-	mux.PUT("/update",
-		instrumentation.GinHandlerFunc(
-			"PUT",
-			"/update",
-			instrumentingMiddleware(
-				handler.MakeUpdateEndpoint(svc),
-			),
-			handler.DecodeRequest,
-			handler.EncodeResponse,
-		),
-	)
+	mux.GET("/list", func(c *gin.Context) {
+		data := svc.List()
+		if data == nil {
+			c.JSON(500, handler.SvcManagerResponse{Err: "No cmd to run."})
+			return
+		}
+		c.Data(200, "application/json", data)
+	})
 
-	mux.PUT("/stop",
-		instrumentation.GinHandlerFunc(
-			"PUT",
-			"/stop",
-			instrumentingMiddleware(
-				handler.MakeStopEndpoint(svc),
-			),
-			handler.DecodeRequest,
-			handler.EncodeResponse,
-		),
-	)
+	mux.PUT("/update", func(c *gin.Context) {
+		if err := svc.Update(); err != nil {
+			c.JSON(500, handler.SvcManagerResponse{Err: err.Error()})
+			return
+		}
+		c.JSON(200, handler.SvcManagerResponse{V: "ok"})
+	})
+
+	mux.PUT("/stop", func(c *gin.Context) {
+		if err := svc.Stop(); err != nil {
+			c.JSON(500, handler.SvcManagerResponse{Err: err.Error()})
+			return
+		}
+		c.JSON(200, handler.SvcManagerResponse{V: "ok"})
+	})
 
 	mux.Any("/health",
 		func(c *gin.Context) {
@@ -273,11 +258,7 @@ func main() {
 		},
 	)
 	mux.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	mux.GET("/metrics", func(c *gin.Context) {
-		daemonMetrics.CmdStatusTotal.With("status", "running").Set(float64(d.GetRunningCmdLen()))
-		daemonMetrics.CmdStatusTotal.With("status", "exited").Set(float64(d.GetExitedCmdLen()))
-		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
-	})
+	mux.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// hostAdmIp
 	var hostAdmIp string
@@ -675,4 +656,55 @@ func killcmd(cmd *exec.Cmd) error {
 	}
 	fmt.Printf("kill %d successfully", pid)
 	return nil
+}
+
+var (
+	// HTTP请求总数
+	httpRequestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"method", "endpoint", "status_code"},
+	)
+
+	// HTTP请求持续时间
+	httpRequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "http_request_duration_seconds",
+			Help:    "Duration of HTTP requests in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "endpoint"},
+	)
+
+	httpRequestErrorTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_request_error_total",
+			Help: "Total number of HTTP request errors",
+		},
+		[]string{"method", "endpoint", "code"},
+	)
+)
+
+func prometheusMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+
+		duration := time.Since(start).Seconds()
+		method := c.Request.Method
+		endpoint := c.FullPath()
+		statusCode := strconv.Itoa(c.Writer.Status())
+		httpRequestsTotal.WithLabelValues(method, endpoint, statusCode).Inc()
+
+		httpRequestDuration.WithLabelValues(method, endpoint).Observe(duration)
+
+		if c.Writer.Status() >= 400 {
+			// 记录错误请求
+			code := strconv.Itoa(c.Writer.Status())
+			httpRequestErrorTotal.WithLabelValues(method, endpoint, code).Inc()
+		}
+	}
+
 }
