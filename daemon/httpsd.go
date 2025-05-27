@@ -30,9 +30,10 @@ func HttpSDHandler(d *Daemon) http.HandlerFunc {
 			if dcmd.Status == Running {
 				targets := []string{dcmd.Annotations[AnnotationsIPKey] + ":" + dcmd.Annotations[AnnotationsPortKey]}
 				labels := map[string]string{
-					"name":        dcmd.Annotations[AnnotationsNameKey],
-					"hostAdmIp":   dcmd.Annotations[AnnotationsIPKey],
-					"metricsPath": dcmd.Annotations[AnnotationsMetricsPathKey],
+					"name":                 dcmd.Annotations[AnnotationsNameKey],
+					"hostAdmIp":            dcmd.Annotations[AnnotationsIPKey],
+					"metricsPath":          dcmd.Annotations[AnnotationsMetricsPathKey],
+					AnnotationsHostnameKey: dcmd.Annotations[AnnotationsHostnameKey],
 				}
 				response = append(response, TargetGroup{Targets: targets, Labels: labels})
 			}
