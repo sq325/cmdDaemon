@@ -14,11 +14,10 @@ package register
 
 import (
 	"bytes"
-	"github.com/sq325/cmdDaemon/daemon"
-	"github.com/sq325/cmdDaemon/internal/tool"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -27,7 +26,8 @@ import (
 	"text/template"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/sq325/cmdDaemon/daemon"
+	"github.com/sq325/cmdDaemon/internal/tool"
 )
 
 type IRegiser interface {
@@ -47,11 +47,11 @@ type Consul struct {
 
 	Daemon *daemon.Daemon
 
-	logger *zap.SugaredLogger
+	logger *slog.Logger // Changed from *zap.SugaredLogger
 }
 
 // providers
-func NewConsul(Consuladdr string, node *Node, daemon *daemon.Daemon, svcList []*Service, logger *zap.SugaredLogger) (*Consul, error) {
+func NewConsul(Consuladdr string, node *Node, daemon *daemon.Daemon, svcList []*Service, logger *slog.Logger) (*Consul, error) { // Changed logger type
 	if Consuladdr == "" {
 		return nil, errors.New("consuladdr is empty")
 	}
@@ -124,29 +124,29 @@ func (c *Consul) Register() error {
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
-		c.logger.Debugln("register req body: ", string(bys))
+		c.logger.Debug(fmt.Sprintf("register req body: %s", string(bys))) // Changed from Debugln
 		reader := bytes.NewReader(bys)
 		req, err := http.NewRequest("PUT", c.URL.JoinPath(registerPath).String(), reader)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		c.logger.Debugf("register req: %+v\n", req)
+		c.logger.Debug(fmt.Sprintf("register req: %+v", req)) // Changed from Debugf
 		defer req.Body.Close()
 		resp, err := c.client.Do(req)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 		// defer c.client.CloseIdleConnections()
-		c.logger.Debugln("register resp: ", resp)
+		c.logger.Debug(fmt.Sprintf("register resp: %v", resp)) // Changed from Debugln
 		if resp != nil && resp.StatusCode != http.StatusOK {
 			errs = errors.Join(errs, errors.New("register failed with status code: "+strconv.Itoa(resp.StatusCode)))
 			var body []byte
-			resp.Body.Read(body)
+			resp.Body.Read(body) // Note: This Read might not fill body as expected. Consider io.ReadAll
 			bodystr := string(body)
-			c.logger.Debugln("register failed, resp body:", bodystr)
+			c.logger.Debug(fmt.Sprintf("register failed, resp body: %s", bodystr)) // Changed from Debugln
 		}
-		c.logger.Infof("Register service: %+v successfully\n", svc)
+		c.logger.Info(fmt.Sprintf("Register service: %+v successfully", svc)) // Changed from Infof
 	}
 	return errs
 }
@@ -161,17 +161,17 @@ func (c *Consul) Deregister() error {
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
-		c.logger.Debugln("deregister req body: ", string(bys))
+		c.logger.Debug(fmt.Sprintf("deregister req body: %s", string(bys))) // Changed from Debugln
 		reader := bytes.NewReader(bys)
 		req, err := http.NewRequest("PUT", c.URL.JoinPath(deregisterPath).String(), reader)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		c.logger.Debugln("deregister req: ", req)
+		c.logger.Debug(fmt.Sprintf("deregister req: %v", req)) // Changed from Debugln
 		defer req.Body.Close()
 		resp, err := c.client.Do(req)
-		c.logger.Debugf("deregister resp: %+v\n", resp)
+		c.logger.Debug(fmt.Sprintf("deregister resp: %+v", resp)) // Changed from Debugf
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
@@ -179,11 +179,11 @@ func (c *Consul) Deregister() error {
 		if resp != nil && resp.StatusCode != http.StatusOK {
 			errs = errors.Join(errs, errors.New("deregister failed with status code: "+strconv.Itoa(resp.StatusCode)))
 			var body []byte
-			resp.Body.Read(body)
+			resp.Body.Read(body) // Note: This Read might not fill body as expected. Consider io.ReadAll
 			bodystr := string(body)
-			c.logger.Debugln("deregister failed, resp body:", bodystr)
+			c.logger.Debug(fmt.Sprintf("deregister failed, resp body: %s", bodystr)) // Changed from Debugln
 		}
-		c.logger.Infof("Deregister service: %+v successfully\n", svc)
+		c.logger.Info(fmt.Sprintf("Deregister service: %+v successfully", svc)) // Changed from Infof
 	}
 	return errs
 }
@@ -202,7 +202,7 @@ func (c *Consul) Watch() {
 		for range ticker1m.C {
 			if runningCount != c.Daemon.GetRunningCmdLen() || exitedCount != c.Daemon.GetExitedCmdLen() {
 				if err := c.RegisterAgain(); err != nil {
-					c.logger.Errorln("RegisterAgain err: ", err)
+					c.logger.Error(fmt.Sprintf("RegisterAgain err: %v", err)) // Changed from Errorln
 					continue
 				}
 				runningCount = c.Daemon.GetRunningCmdLen()
@@ -218,7 +218,7 @@ func (c *Consul) Watch() {
 		defer wg.Done()
 		for range ticker15m.C {
 			if err := c.RegisterAgain(); err != nil {
-				c.logger.Errorln("RegisterAgain err: ", err)
+				c.logger.Error(fmt.Sprintf("RegisterAgain err: %v", err)) // Changed from Errorln
 				continue
 			}
 		}
@@ -272,11 +272,11 @@ func (c *Consul) PrintConf(out io.Writer) {
 	}
 	tmpl, err := template.New("consul").Funcs(template.FuncMap{"sub": sub}).Parse(TmplStr)
 	if err != nil {
-		c.logger.Errorln("Parse consul config failed. ", err)
+		c.logger.Error(fmt.Sprintf("Parse consul config failed. %v", err)) // Changed from Errorln
 	}
 	err = tmpl.Execute(out, services)
 	if err != nil {
-		c.logger.Errorln("Execute consul config failed. ", err)
+		c.logger.Error(fmt.Sprintf("Execute consul config failed. %v", err)) // Changed from Errorln
 	}
 }
 
