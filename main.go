@@ -196,14 +196,38 @@ func main() {
 	mux.Use(prometheusMiddleware())
 
 	mux.PUT("/restart", func(c *gin.Context) {
+		// Check for the 'update' query parameter
+		if _, ok := c.GetQuery("update"); ok {
+			logger.Info("Update requested before reload")
+			if err := svc.Update(); err != nil {
+				logger.Error("Service update failed during restart sequence", "error", err)
+				c.JSON(500, handler.SvcManagerResponse{Err: "update failed: " + err.Error()})
+				return
+			}
+			logger.Info("Service updated successfully before restart")
+		}
+
 		if err := svc.Restart(); err != nil {
-			c.JSON(500, handler.SvcManagerResponse{Err: err.Error()})
+			logger.Error("Service restart failed", "error", err)
+			c.JSON(500, handler.SvcManagerResponse{Err: "restart failed: " + err.Error()})
 			return
 		}
+		logger.Info("Service restarted successfully")
 		c.JSON(200, handler.SvcManagerResponse{V: "ok"})
 	})
 
 	mux.PUT("/reload", func(c *gin.Context) {
+		// Check for the 'update' query parameter
+		if _, ok := c.GetQuery("update"); ok {
+			logger.Info("Update requested before restart")
+			if err := svc.Update(); err != nil {
+				logger.Error("Service update failed during restart sequence", "error", err)
+				c.JSON(500, handler.SvcManagerResponse{Err: "update failed: " + err.Error()})
+				return
+			}
+			logger.Info("Service updated successfully before restart")
+		}
+
 		err := svc.Reload()
 		if err != nil {
 			c.JSON(500, handler.SvcManagerResponse{Err: err.Error()})
@@ -212,7 +236,7 @@ func main() {
 		c.JSON(200, handler.SvcManagerResponse{V: "ok"})
 	})
 
-	mux.GET("/list", func(c *gin.Context) {
+	mux.Any("/list", func(c *gin.Context) {
 		data := svc.List()
 		if data == nil {
 			c.JSON(500, handler.SvcManagerResponse{Err: "No cmd to run."})
