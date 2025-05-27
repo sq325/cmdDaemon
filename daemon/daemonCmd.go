@@ -8,7 +8,17 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/sq325/cmdDaemon/config"
 	"github.com/sq325/cmdDaemon/internal/tool"
+)
+
+// Default Annotations keys for DaemonCmd
+const (
+	AnnotationsNameKey        = config.AnnotationsNameKey        // 服务名称
+	AnnotationsIPKey          = config.AnnotationsIPKey          // 管理IP
+	AnnotationsPortKey        = config.AnnotationsPortKey        // 端口号
+	AnnotationsMetricsPathKey = config.AnnotationsMetricsPathKey // metrics路径
+	AnnotationsHostnameKey    = config.AnnotationsHostnameKey    // 主机名
 )
 
 // DaemonCmd is a cmd that managed by daemon
@@ -19,7 +29,13 @@ type DaemonCmd struct {
 	Cmd     *exec.Cmd
 	Limiter *Limiter // 限制重启次数
 
-	Annotations map[string]string // cmd的注释信息, name, hostName, admIP, port
+	// Annotations:
+	// 	 name: "prometheus" // 默认basename cmd.Args[0]
+	// 	 port: "9091" // 需要人工填写
+	// 	 hostname: "proxy-a" // 默认os.Hostname()
+	// 	 ip: "12.12.12.12" // 默认/etc/hosts中根据hostname查找
+	// 	 metricsPath: "/metrics" // 需填写，如果为""，表示该cmd不提供metrics
+	Annotations map[string]string // cmd的注释信息, name, hostName, ip, port
 	Status      int               // running: 1, exited: 0
 	Err         error             // 退出原因
 
@@ -33,7 +49,6 @@ func NewDaemonCmd(ctx context.Context, cmd *exec.Cmd, anotations map[string]stri
 		Annotations: anotations,
 		Limiter:     NewLimiter(),
 	}
-
 }
 
 // update reset the cmd, status and err fields for restarting
@@ -59,8 +74,8 @@ func (dcmd *DaemonCmd) startAndWait(ch chan<- *DaemonCmd) {
 			return
 		}
 
-		logfilePath := filepath.Join(dcmd.logDir, fmt.Sprintf("%s_%s_%s.log", dcmd.Annotations["name"],
-			dcmd.Annotations["port"], dcmd.CmdHash()))
+		logfilePath := filepath.Join(dcmd.logDir, fmt.Sprintf("%s_%s_%s.log", dcmd.Annotations[AnnotationsNameKey],
+			dcmd.Annotations[AnnotationsPortKey], dcmd.CmdHash()))
 
 		// 以追加模式打开日志文件，如果不存在则创建
 		f, err := os.OpenFile(logfilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)

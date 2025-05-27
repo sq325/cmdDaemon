@@ -10,6 +10,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	AnnotationsNameKey        = "name"        // 服务名称
+	AnnotationsIPKey          = "ip"          // 管理IP
+	AnnotationsPortKey        = "port"        // 端口号
+	AnnotationsMetricsPathKey = "metricsPath" // metrics路径
+	AnnotationsHostnameKey    = "hostname"    // 主机名
+)
+
 var (
 	DefaultConfig = `cmds:
   - cmd: ./cmd/prometheusLinux/prometheus
@@ -27,7 +35,7 @@ var (
       name: "prometheus"
       port: "9091"
       hostname: "proxy-a"
-      admIP: "12.12.12.12"
+      ip: "12.12.12.12"
       metricsPath: "/metrics"`
 )
 
@@ -58,7 +66,7 @@ func GenerateCmds(conf *Conf) ([]*exec.Cmd, []map[string]string) {
 	annotationsList := make([]map[string]string, 0, len(conf.Cmds))
 
 	conf.Accept(withHostName)
-	conf.Accept(withAdmIp)
+	conf.Accept(withIP)
 	conf.Accept(withName)
 
 	for _, cmd := range conf.Cmds {
@@ -90,17 +98,17 @@ func withHostName(c *Conf) {
 		fmt.Printf("Error getting hostname: %v\n", err)
 		return
 	}
-	for _, cmd := range c.Cmds {
-		if cmd.Annotations == nil {
-			cmd.Annotations = make(map[string]string, 10)
+	for i := range c.Cmds { // Iterate by index to modify the slice elements directly
+		if c.Cmds[i].Annotations == nil {
+			c.Cmds[i].Annotations = make(map[string]string, 10)
 		}
-		if cmd.Annotations["hostname"] == "" {
-			cmd.Annotations["hostname"] = hostname
+		if c.Cmds[i].Annotations[AnnotationsHostnameKey] == "" {
+			c.Cmds[i].Annotations[AnnotationsHostnameKey] = hostname
 		}
 	}
 }
 
-func withAdmIp(c *Conf) {
+func withIP(c *Conf) {
 	if c == nil {
 		return
 	}
@@ -116,12 +124,12 @@ func withAdmIp(c *Conf) {
 		return
 	}
 
-	for _, cmd := range c.Cmds {
-		if cmd.Annotations == nil {
-			cmd.Annotations = make(map[string]string, 10)
+	for i := range c.Cmds { // Iterate by index to modify the slice elements directly
+		if c.Cmds[i].Annotations == nil {
+			c.Cmds[i].Annotations = make(map[string]string, 10)
 		}
-		if cmd.Annotations["admIP"] == "" {
-			cmd.Annotations["admIP"] = admIP
+		if c.Cmds[i].Annotations[AnnotationsIPKey] == "" {
+			c.Cmds[i].Annotations[AnnotationsIPKey] = admIP
 		}
 	}
 }
@@ -131,15 +139,13 @@ func withName(c *Conf) {
 		return
 	}
 
-	for _, cmd := range c.Cmds {
-		if cmd.Annotations == nil {
-			cmd.Annotations = make(map[string]string, 10)
+	for i := range c.Cmds { // Iterate by index to modify the slice elements directly
+		if c.Cmds[i].Annotations == nil {
+			c.Cmds[i].Annotations = make(map[string]string, 10)
 		}
-		if cmd.Annotations["name"] == "" {
-			if cmd.Annotations == nil {
-				cmd.Annotations = make(map[string]string, 10)
-			}
-			cmd.Annotations["name"] = filepath.Base(cmd.Cmd)
+		if c.Cmds[i].Annotations[AnnotationsNameKey] == "" {
+			// No need to check for nil again, already done above
+			c.Cmds[i].Annotations[AnnotationsNameKey] = filepath.Base(c.Cmds[i].Cmd)
 		}
 	}
 }
