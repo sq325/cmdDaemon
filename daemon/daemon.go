@@ -213,3 +213,16 @@ func (d *Daemon) RegisterMetrics(r prometheus.Registerer) error {
 	}
 	return nil
 }
+
+type DaemonFunc func(d *Daemon)
+
+func WithCmdLogDir(logDir string) DaemonFunc {
+	return func(d *Daemon) {
+		if d == nil {
+			return
+		}
+		for _, dcmd := range d.DCmds {
+			withLogDir(logDir)(dcmd)
+		}
+	}
+}

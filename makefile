@@ -8,7 +8,7 @@ buildGoVersion := $(shell go version|awk '{print $$3}')
 author := $(shell git config user.name)
 tag := $(shell git describe --tags --abbrev=0 2>/dev/null)
 commitInfo := $(shell git log -1 --format=%s $(tag) 2>/dev/null)
-LDFLAGS := -X '$(modName)/main.projectName=$(projectName)' -X '$(modName)/main.buildTime=$(buildTime)' -X '$(modName)/main.buildGoVersion=$(buildGoVersion)' -X '$(modName)/main.author=$(author)' -X '$(modName)/main._version=$(tag)' -X '$(modName)/main._versionInfo=$(commitInfo)'
+LDFLAGS := -X 'main.projectName=$(projectName)' -X 'main.buildTime=$(buildTime)' -X 'main.buildGoVersion=$(buildGoVersion)' -X 'main.author=$(author)' -X 'main._version=$(tag)' -X 'main._versionInfo=$(commitInfo)'
 version ?= $(shell git describe --tags --abbrev=0)
 
 build: 
