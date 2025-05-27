@@ -18,6 +18,7 @@ func TestUnmarshalDefaultConfig(t *testing.T) {
 	if conf.Cmds[0].Annotations[AnnotationsNameKey] != "prometheus" {
 		t.Errorf("Expected name to be 'prometheus', but got: %s", conf.Cmds[0].Annotations[AnnotationsNameKey])
 	}
+	t.Log("Config unmarshalled successfully:", conf)
 }
 func TestGenerateCmds(t *testing.T) {
 	conf, err := Unmarshal([]byte(DefaultConfig))

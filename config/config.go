@@ -32,11 +32,11 @@ var (
       - --storage.tsdb.retention.time
       - 7d
     annotations:
-      name: "prometheus"
-      port: "9091"
-      hostname: "proxy-a"
-      ip: "12.12.12.12"
-      metricsPath: "/metrics"`
+      name: "prometheus" # 默认basename cmd.Args[0]
+      port: "9091" # 需要人工填写
+      hostname: "proxy-a" # 默认os.Hostname()
+      ip: "12.12.12.12" # 默认/etc/hosts中根据hostname查找
+      metricsPath: "/metrics" # 需填写，如果为""，表示该cmd不提供metrics`
 )
 
 type Conf struct {

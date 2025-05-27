@@ -9,7 +9,7 @@ var (
 			Name: "daemon_cmd_status",
 			Help: "Status of daemon cmd",
 		},
-		[]string{"name", "port", "status", "hostname", "admIP"},
+		[]string{"name", "port", "status", "hostname", "ip"},
 	)
 
 	dcmdRestartCount = prometheus.NewCounterVec(
@@ -17,7 +17,7 @@ var (
 			Name: "daemon_cmd_restart_total",
 			Help: "Total number of restarts for each daemon cmd",
 		},
-		[]string{"name", "port", "hostname", "admIP"},
+		[]string{"name", "port", "hostname", "ip"},
 	)
 )
 
@@ -43,7 +43,7 @@ func (collector *daemonCollector) Collect(ch chan<- prometheus.Metric) {
 			"port":     dcmd.Annotations["port"],
 			"status":   status,
 			"hostname": dcmd.Annotations["hostName"],
-			"admIP":    dcmd.Annotations["admIP"],
+			"ip":       dcmd.Annotations["ip"],
 		}).Set(float64(dcmd.Status))
 	}
 	dcmdStatus.Collect(ch)
