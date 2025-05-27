@@ -6,8 +6,6 @@ import (
 	"net/http/httptest"
 	"os/exec"
 	"testing"
-
-	"github.com/sq325/cmdDaemon/config"
 )
 
 func newDcmds(annotations map[string]string) []*DaemonCmd {
@@ -22,40 +20,40 @@ func newDcmds(annotations map[string]string) []*DaemonCmd {
 			name:    "simple command",
 			cmdArgs: []string{"echo", "hello", "world"},
 			annotations: map[string]string{
-				config.AnnotationsNameKey:        "echo-service",
-				config.AnnotationsIPKey:          "1.1.1.1",
-				config.AnnotationsPortKey:        "1234",
-				config.AnnotationsMetricsPathKey: "/metrics",
-				config.AnnotationsHostnameKey:    "echo-host",
+				AnnotationsNameKey:        "echo-service",
+				AnnotationsIPKey:          "1.1.1.1",
+				AnnotationsPortKey:        "1234",
+				AnnotationsMetricsPathKey: "/metrics",
+				AnnotationsHostnameKey:    "echo-host",
 			},
 		},
 		{
 			name:    "command with flags",
 			cmdArgs: []string{"ls", "-l", "-a", "/tmp"},
 			annotations: map[string]string{
-				config.AnnotationsNameKey:        "ls-service",
-				config.AnnotationsIPKey:          "2.2.2.2",
-				config.AnnotationsPortKey:        "2345",
-				config.AnnotationsMetricsPathKey: "/metrics",
-				config.AnnotationsHostnameKey:    "ls-host",
+				AnnotationsNameKey:        "ls-service",
+				AnnotationsIPKey:          "2.2.2.2",
+				AnnotationsPortKey:        "2345",
+				AnnotationsMetricsPathKey: "/metrics",
+				AnnotationsHostnameKey:    "ls-host",
 			},
 		},
 		{
 			name:    "command with no args",
 			cmdArgs: []string{"pwd"},
 			annotations: map[string]string{
-				config.AnnotationsNameKey: "pwd-service",
-				config.AnnotationsIPKey:   "3.3.3.3",
-				config.AnnotationsPortKey: "3456",
+				AnnotationsNameKey: "pwd-service",
+				AnnotationsIPKey:   "3.3.3.3",
+				AnnotationsPortKey: "3456",
 			},
 		},
 		{
 			name:    "command with args in specific order",
 			cmdArgs: []string{"mycmd", "--opt1", "val1", "--opt2", "val2"},
 			annotations: map[string]string{
-				config.AnnotationsNameKey:        "mycmd-service",
-				config.AnnotationsPortKey:        "4444",
-				config.AnnotationsMetricsPathKey: "/api/v1/metrics",
+				AnnotationsNameKey:        "mycmd-service",
+				AnnotationsPortKey:        "4444",
+				AnnotationsMetricsPathKey: "/api/v1/metrics",
 			},
 		},
 	}
@@ -100,7 +98,7 @@ func TestHttpSDHandler(t *testing.T) {
 				DCmds: []*DaemonCmd{
 					{
 						Annotations: map[string]string{
-							config.AnnotationsNameKey: "test-service",
+							AnnotationsNameKey: "test-service",
 						},
 						Status: Running,
 					},
@@ -114,10 +112,10 @@ func TestHttpSDHandler(t *testing.T) {
 				DCmds: []*DaemonCmd{
 					{
 						Annotations: map[string]string{
-							config.AnnotationsNameKey:        "test-service",
-							config.AnnotationsIPKey:          "192.168.1.100",
-							config.AnnotationsPortKey:        "8080",
-							config.AnnotationsMetricsPathKey: "/metrics",
+							AnnotationsNameKey:        "test-service",
+							AnnotationsIPKey:          "192.168.1.100",
+							AnnotationsPortKey:        "8080",
+							AnnotationsMetricsPathKey: "/metrics",
 						},
 						Status: Exited,
 					},
@@ -131,10 +129,11 @@ func TestHttpSDHandler(t *testing.T) {
 				DCmds: []*DaemonCmd{
 					{
 						Annotations: map[string]string{
-							config.AnnotationsNameKey:        "test-service",
-							config.AnnotationsIPKey:          "192.168.1.100",
-							config.AnnotationsPortKey:        "8080",
-							config.AnnotationsMetricsPathKey: "/metrics",
+							AnnotationsNameKey:        "test-service",
+							AnnotationsIPKey:          "192.168.1.100",
+							AnnotationsPortKey:        "8080",
+							AnnotationsMetricsPathKey: "/metrics",
+							AnnotationsHostnameKey:    "proxy-a",
 						},
 						Status: Running,
 					},
@@ -144,8 +143,10 @@ func TestHttpSDHandler(t *testing.T) {
 				{
 					Targets: []string{"192.168.1.100:8080"},
 					Labels: map[string]string{
-						"name":      "test-service",
-						"hostAdmIp": "192.168.1.100",
+						"name":                 "test-service",
+						"hostAdmIp":            "192.168.1.100",
+						"metricsPath":          "/metrics",
+						AnnotationsHostnameKey: "proxy-a",
 					},
 				},
 			},
@@ -156,19 +157,21 @@ func TestHttpSDHandler(t *testing.T) {
 				DCmds: []*DaemonCmd{
 					{
 						Annotations: map[string]string{
-							config.AnnotationsNameKey:        "service-1",
-							config.AnnotationsIPKey:          "192.168.1.100",
-							config.AnnotationsPortKey:        "8080",
-							config.AnnotationsMetricsPathKey: "/metrics",
+							AnnotationsNameKey:        "service-1",
+							AnnotationsIPKey:          "192.168.1.100",
+							AnnotationsPortKey:        "8080",
+							AnnotationsMetricsPathKey: "/metrics",
+							AnnotationsHostnameKey:    "proxy-a",
 						},
 						Status: Running,
 					},
 					{
 						Annotations: map[string]string{
-							config.AnnotationsNameKey:        "service-2",
-							config.AnnotationsIPKey:          "192.168.1.101",
-							config.AnnotationsPortKey:        "9090",
-							config.AnnotationsMetricsPathKey: "/metrics",
+							AnnotationsNameKey:        "service-2",
+							AnnotationsIPKey:          "192.168.1.101",
+							AnnotationsPortKey:        "9090",
+							AnnotationsMetricsPathKey: "/metrics",
+							AnnotationsHostnameKey:    "proxy-b",
 						},
 						Status: Running,
 					},
@@ -178,15 +181,19 @@ func TestHttpSDHandler(t *testing.T) {
 				{
 					Targets: []string{"192.168.1.100:8080"},
 					Labels: map[string]string{
-						"name":      "service-1",
-						"hostAdmIp": "192.168.1.100",
+						"name":                 "service-1",
+						"hostAdmIp":            "192.168.1.100",
+						"metricsPath":          "/metrics",
+						AnnotationsHostnameKey: "proxy-a",
 					},
 				},
 				{
 					Targets: []string{"192.168.1.101:9090"},
 					Labels: map[string]string{
-						"name":      "service-2",
-						"hostAdmIp": "192.168.1.101",
+						"name":                 "service-2",
+						"hostAdmIp":            "192.168.1.101",
+						"metricsPath":          "/metrics",
+						AnnotationsHostnameKey: "proxy-b",
 					},
 				},
 			},
