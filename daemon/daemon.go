@@ -32,13 +32,14 @@ type Daemon struct {
 }
 
 func NewDaemon(ctx context.Context, dcmds []*DaemonCmd, logger *slog.Logger) *Daemon {
-
-	return &Daemon{
+	d := &Daemon{
 		ctx:         ctx,
 		exitedCmdCh: make(chan *DaemonCmd, 20),
 		DCmds:       dcmds,
 		Logger:      logger,
 	}
+	WithCmdLogDir("./log")(d)
+	return d
 }
 
 // 主goroutine
