@@ -47,6 +47,15 @@ func (d *Daemon) Run() {
 	// 运行all cmds
 	// exitedCmdCh生产者
 	go d.run()
+	// 初始化restart指标
+	for _, dcmd := range d.DCmds {
+		dcmdRestartCount.WithLabelValues(
+			dcmd.Annotations["name"],
+			dcmd.Annotations["port"],
+			dcmd.Annotations["hostName"],
+			dcmd.Annotations["admIP"],
+		).Add(0)
+	}
 
 	// 每30分钟重置所有cmd的limiter
 	limitResetTicker := time.NewTicker(30 * time.Minute)
