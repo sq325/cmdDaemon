@@ -272,6 +272,7 @@ func main() {
 	)
 	mux.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	mux.GET("/metrics", gin.WrapH(metricsHandler))
+	mux.GET("/discovery", gin.WrapH(daemon.HttpSDHandler(d)))
 
 	chDone := make(chan struct{}, 1)
 	mux.Use(cors.Default())

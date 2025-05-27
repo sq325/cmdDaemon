@@ -50,10 +50,10 @@ func (d *Daemon) Run() {
 	// 初始化restart指标
 	for _, dcmd := range d.DCmds {
 		dcmdRestartCount.WithLabelValues(
-			dcmd.Annotations["name"],
-			dcmd.Annotations["port"],
-			dcmd.Annotations["hostName"],
-			dcmd.Annotations["admIP"],
+			dcmd.Annotations[AnnotationsNameKey],
+			dcmd.Annotations[AnnotationsPortKey],
+			dcmd.Annotations[AnnotationsHostnameKey],
+			dcmd.Annotations[AnnotationsIPKey],
 		).Add(0)
 	}
 
@@ -123,10 +123,10 @@ func (d *Daemon) Run() {
 					if ok := dcmd.Limiter.Inc(); ok {
 						d.Logger.Warn("Command restarted")
 						dcmdRestartCount.WithLabelValues(
-							dcmd.Annotations["name"],
-							dcmd.Annotations["port"],
-							dcmd.Annotations["hostName"],
-							dcmd.Annotations["admIP"],
+							dcmd.Annotations[AnnotationsNameKey],
+							dcmd.Annotations[AnnotationsPortKey],
+							dcmd.Annotations[AnnotationsHostnameKey],
+							dcmd.Annotations[AnnotationsIPKey],
 						).Inc()
 						dcmd.startAndWait(d.exitedCmdCh)
 						return
