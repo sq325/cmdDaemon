@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -8,7 +9,7 @@ import (
 	"testing"
 )
 
-func newDcmds(annotations map[string]string) []*DaemonCmd {
+func newDcmds() []*DaemonCmd {
 	type testCase struct {
 		name        string
 		cmdArgs     []string // First element is command, rest are args
@@ -61,7 +62,7 @@ func newDcmds(annotations map[string]string) []*DaemonCmd {
 	dcmds := make([]*DaemonCmd, 0, len(tests))
 	for _, tt := range tests {
 		cmd := exec.Command(tt.cmdArgs[0], tt.cmdArgs[1:]...)
-		dcmd := NewDaemonCmd(nil, cmd, tt.annotations)
+		dcmd := NewDaemonCmd(context.TODO(), cmd, tt.annotations)
 		dcmds = append(dcmds, dcmd)
 	}
 	return dcmds

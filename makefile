@@ -3,16 +3,25 @@
 buildTime ?= $(shell date '+%Y-%m-%d_%H:%M:%S')
 modName := $(shell go list -m)
 projectName := $(shell basename $(modName))
-# git remote get-url origin | xargs basename -s .git
 buildGoVersion := $(shell go version|awk '{print $$3}')
-author := $(shell git config user.name)
-tag := $(shell git describe --tags --abbrev=0 2>/dev/null)
-commitInfo := $(shell git log -1 --format=%s $(tag) 2>/dev/null)
-LDFLAGS := -X 'main.projectName=$(projectName)' -X 'main.buildTime=$(buildTime)' -X 'main.buildGoVersion=$(buildGoVersion)' -X 'main.author=$(author)' -X 'main._version=$(tag)' -X 'main._versionInfo=$(commitInfo)'
-version ?= $(shell git describe --tags --abbrev=0)
+SHELL_ESCAPE_SINGLE_QUOTES = sed "s/'//g"
+# Escape potentially problematic values
+author := $(shell git config user.name | $(SHELL_ESCAPE_SINGLE_QUOTES))
+tag := $(shell git describe --tags --abbrev=0 2>/dev/null | $(SHELL_ESCAPE_SINGLE_QUOTES))
+# Use the raw tag for git log, then escape the resulting commitInfo
+commitInfo := $(shell git log -1 --format="%s" "$(tag)" 2>/dev/null | $(SHELL_ESCAPE_SINGLE_QUOTES))
 
-build: 
-	@CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(projectName)
+LDFLAGS := -X 'main.projectName=$(projectName)' \
+           -X 'main.buildTime=$(buildTime)' \
+           -X 'main.buildGoVersion=$(buildGoVersion)' \
+           -X 'main.author=$(author)' \
+           -X 'main._version=$(tag)' \
+           -X 'main._versionInfo=$(commitInfo)'
+version ?= $(tag) # Use the escaped tag for consistency if version is also injected or used in similar contexts
+
+build:
+	@echo "--- Building ---"
+	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(projectName)
 
 darwin:
 	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o $(projectName)
