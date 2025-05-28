@@ -19,6 +19,7 @@ const (
 	AnnotationsPortKey        = config.AnnotationsPortKey        // 端口号
 	AnnotationsMetricsPathKey = config.AnnotationsMetricsPathKey // metrics路径
 	AnnotationsHostnameKey    = config.AnnotationsHostnameKey    // 主机名
+	AnnotationsAppKey         = config.AnnotationsAppKey         // 应用名称, 用于区分不同应用的cmd
 )
 
 // DaemonCmd is a cmd that managed by daemon

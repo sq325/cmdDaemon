@@ -54,6 +54,7 @@ func (d *Daemon) Run() {
 			dcmd.Annotations[AnnotationsPortKey],
 			dcmd.Annotations[AnnotationsHostnameKey],
 			dcmd.Annotations[AnnotationsIPKey],
+			dcmd.Annotations[AnnotationsAppKey],
 		).Add(0)
 	}
 
@@ -127,6 +128,7 @@ func (d *Daemon) Run() {
 							dcmd.Annotations[AnnotationsPortKey],
 							dcmd.Annotations[AnnotationsHostnameKey],
 							dcmd.Annotations[AnnotationsIPKey],
+							dcmd.Annotations[AnnotationsAppKey],
 						).Inc()
 						dcmd.startAndWait(d.exitedCmdCh)
 						return

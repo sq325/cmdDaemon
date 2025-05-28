@@ -1,4 +1,5 @@
 cmd/**
 daemon.log
 daemon.pid
+daemon.yml
 cmdDaemon
