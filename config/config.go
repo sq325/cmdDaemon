@@ -16,6 +16,7 @@ const (
 	AnnotationsPortKey        = "port"        // 端口号
 	AnnotationsMetricsPathKey = "metricsPath" // metrics路径
 	AnnotationsHostnameKey    = "hostname"    // 主机名
+	AnnotationsAppKey         = "app"         // 应用名称, 用于区分不同应用的cmd
 )
 
 var (
@@ -36,7 +37,8 @@ var (
       port: "9091" # 需要人工填写
       hostname: "proxy-a" # 默认os.Hostname()
       ip: "12.12.12.12" # 默认/etc/hosts中根据hostname查找
-      metricsPath: "/metrics" # 需填写，如果为""，表示该cmd不提供metrics`
+      metricsPath: "/metrics" # 需填写，如果为""，表示该cmd不提供metrics
+      app: "xieCloud" # 应用名称, 用于区分不同应用的cmd`
 )
 
 type Conf struct {
