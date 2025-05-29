@@ -190,8 +190,9 @@ func main() {
 	}
 
 	// 注册路由
-	mux := gin.Default()
-	gin.SetMode(gin.ReleaseMode)
+	mux := gin.New() // Changed from gin.Default()
+	// gin.SetMode(gin.ReleaseMode) // Already default in gin.New() if not debug
+	mux.Use(gin.Recovery()) // Add Recovery middleware if needed, Default() includes it
 
 	mux.Use(prometheusMiddleware())
 
